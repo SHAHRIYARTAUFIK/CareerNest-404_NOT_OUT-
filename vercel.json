@@ -1,15 +1,19 @@
 {
-    "version": 2,
-    "builds": [
-        {
-            "src": "main.py",
-            "use": "@vercel/python"
-        }
-    ],
-    "routes": [
-        {
-            "src": "/(.*)",
-            "dest": "main.py"
-        }
-    ]
+  "version": 2,
+  "builds": [
+    {
+      "src": "main.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    { "src": "/docs(.*)", "dest": "main.py" },
+    { "src": "/openapi.json", "dest": "main.py" },
+    { "src": "/companies(.*)", "dest": "main.py" },
+    { "src": "/jobs(.*)", "dest": "main.py" },
+    { "src": "/applications(.*)", "dest": "main.py" },
+    { "src": "/students(.*)", "dest": "main.py" },
+    { "src": "/bookmarks(.*)", "dest": "main.py" },
+    { "src": "/stats(.*)", "dest": "main.py" }
+  ]
 }
