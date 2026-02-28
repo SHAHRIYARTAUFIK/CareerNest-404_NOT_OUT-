@@ -9,12 +9,14 @@
  */
 const CONFIG = {
     /**
+    
      * Your Google OAuth 2.0 Client ID.
      * Get it from: https://console.cloud.google.com/
      *   → APIs & Services → Credentials → Create OAuth client ID (Web application)
      *   → Add http://localhost to Authorized JavaScript origins
      *   → Copy the Client ID and paste below.
      */
+    API_BASE: "https://career-nest-404-not-out.vercel.app"
     GOOGLE_CLIENT_ID: "175096449908-avt2v9l07tag5sp36d6ugp8kquogpqvm.apps.googleusercontent.com",
 
     /**
