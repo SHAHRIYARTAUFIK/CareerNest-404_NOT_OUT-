@@ -1,0 +1,5295 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23f59e0b'/%3E%3Cstop offset='100%25' stop-color='%23ea580c'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='12' fill='url(%23g)'/%3E%3Ctext x='32' y='46' font-family='Georgia,serif' font-size='30' font-weight='900' font-style='italic' text-anchor='middle' fill='%23111111'%3ECN%3C/text%3E%3C/svg%3E" />
+  <title>CareerNest — Centralized Job & Internship Board</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,900;1,600&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap"
+    rel="stylesheet" />
+  <!-- Config (fill values from .env) -->
+  <script src="config.js"></script>
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    /* ═══════════════════════════════════════════════════
+   CSS VARIABLES
+═══════════════════════════════════════════════════ */
+    :root {
+      --bg: #070d1a;
+      --bg2: #0d1628;
+      --surface: #111e33;
+      --card: #142036;
+      --card-hi: #1a2844;
+      --border: rgba(255, 255, 255, .07);
+      --border-hi: rgba(245, 158, 11, .3);
+      --gold: #f59e0b;
+      --gold-lt: #fbbf24;
+      --gold-dim: rgba(245, 158, 11, .1);
+      --blue: #3b82f6;
+      --blue-dim: rgba(59, 130, 246, .12);
+      --green: #10b981;
+      --green-dim: rgba(16, 185, 129, .12);
+      --orange: #f97316;
+      --red: #ef4444;
+      --purple: #8b5cf6;
+      --text: #e8edf5;
+      --muted: #7d8fa8;
+      --subtle: #3a4a60;
+      --r-sm: 8px;
+      --r-md: 14px;
+      --r-lg: 20px;
+      --r-xl: 28px;
+      --shadow: 0 4px 24px rgba(0, 0, 0, .4);
+      --shadow-lg: 0 16px 60px rgba(0, 0, 0, .6);
+      --trans: .22s cubic-bezier(.4, 0, .2, 1);
+      --trans-spring: .4s cubic-bezier(.34, 1.56, .64, 1);
+      /* Gradients */
+      --grad-gold: linear-gradient(135deg, #f59e0b, #f97316);
+      --grad-blue: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      --grad-aurora: linear-gradient(135deg, #f59e0b 0%, #ef4444 40%, #8b5cf6 70%, #3b82f6 100%);
+      --grad-green: linear-gradient(135deg, #10b981, #06b6d4);
+      --glow-gold: 0 0 24px rgba(245, 158, 11, .2);
+    }
+
+    /* ═══════════════════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════════════════ */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    html {
+      scroll-behavior: smooth;
+      font-size: 16px
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.6
+    }
+
+    img {
+      max-width: 100%;
+      display: block
+    }
+
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      background: none
+    }
+
+    input,
+    select,
+    textarea {
+      font-family: inherit
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none
+    }
+
+    ul {
+      list-style: none
+    }
+
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg)
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, var(--gold), var(--orange));
+      border-radius: 99px
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--gold);
+      outline-offset: 3px;
+      border-radius: 4px
+    }
+
+    .hidden {
+      display: none !important
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0)
+    }
+
+    .serif {
+      font-family: 'Playfair Display', serif
+    }
+
+    /* ═══════════════════════════════════════════════════
+   SCROLL PROGRESS
+═══════════════════════════════════════════════════ */
+    #scroll-progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 300;
+      height: 2px;
+      width: 0%;
+      background: var(--grad-aurora);
+      background-size: 200%;
+      transition: width .1s linear;
+      pointer-events: none;
+    }
+
+    /* ═══════════════════════════════════════════════════
+   ANIMATIONS
+═══════════════════════════════════════════════════ */
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(22px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0
+      }
+
+      to {
+        opacity: 1
+      }
+    }
+
+    @keyframes slideInR {
+      from {
+        opacity: 0;
+        transform: translateX(40px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0)
+      }
+    }
+
+    @keyframes slideInL {
+      from {
+        opacity: 0;
+        transform: translateX(-40px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0)
+      }
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(100%)
+      }
+
+      to {
+        transform: translateY(0)
+      }
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .45
+      }
+    }
+
+    @keyframes shimmer {
+      0% {
+        background-position: -200% 0
+      }
+
+      100% {
+        background-position: 200% 0
+      }
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    @keyframes bounce-in {
+      0% {
+        transform: scale(.85) translateY(8px);
+        opacity: 0
+      }
+
+      70% {
+        transform: scale(1.03)
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: 1
+      }
+    }
+
+    @keyframes aurora {
+
+      0%,
+      100% {
+        background-position: 0% 50%
+      }
+
+      50% {
+        background-position: 100% 50%
+      }
+    }
+
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translateY(0)
+      }
+
+      50% {
+        transform: translateY(-14px)
+      }
+    }
+
+    @keyframes ripple {
+      0% {
+        transform: scale(0);
+        opacity: .5
+      }
+
+      100% {
+        transform: scale(4);
+        opacity: 0
+      }
+    }
+
+    @keyframes checkIn {
+      0% {
+        transform: scale(0) rotate(-45deg);
+        opacity: 0
+      }
+
+      70% {
+        transform: scale(1.2) rotate(5deg)
+      }
+
+      100% {
+        transform: scale(1) rotate(0);
+        opacity: 1
+      }
+    }
+
+    @keyframes gradShift {
+      0% {
+        background-position: 0%
+      }
+
+      100% {
+        background-position: 200%
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════
+   NAV
+═══════════════════════════════════════════════════ */
+    #nav {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .85rem 2rem;
+      background: rgba(7, 13, 26, .82);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-bottom: 1px solid var(--border);
+      gap: 1.25rem;
+      transition: background .3s, box-shadow .3s, border-color .3s;
+    }
+
+    #nav.scrolled {
+      background: rgba(7, 13, 26, .96);
+      box-shadow: 0 4px 32px rgba(0, 0, 0, .5), 0 1px 0 rgba(245, 158, 11, .08);
+      border-bottom-color: rgba(245, 158, 11, .12);
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: .65rem;
+      flex-shrink: 0
+    }
+
+    .nav-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      background: var(--grad-gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Playfair Display', serif;
+      font-weight: 900;
+      font-size: 1.15rem;
+      color: var(--bg);
+      box-shadow: 0 2px 14px rgba(245, 158, 11, .4);
+      transition: transform var(--trans-spring), box-shadow .2s;
+    }
+
+    .nav-logo:hover {
+      transform: scale(1.1) rotate(-4deg);
+      box-shadow: 0 4px 22px rgba(245, 158, 11, .6)
+    }
+
+    .nav-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -.01em
+    }
+
+    .nav-title span {
+      color: var(--gold)
+    }
+
+    .nav-search {
+      flex: 1;
+      max-width: 400px;
+      display: flex;
+      align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: .42rem 1rem .42rem .85rem;
+      gap: .5rem;
+      transition: border-color var(--trans), box-shadow var(--trans);
+    }
+
+    .nav-search:focus-within {
+      border-color: var(--border-hi);
+      box-shadow: 0 0 0 3px var(--gold-dim)
+    }
+
+    .nav-search svg {
+      color: var(--muted);
+      flex-shrink: 0
+    }
+
+    .nav-search input {
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-size: .875rem;
+      width: 100%
+    }
+
+    .nav-search input::placeholder {
+      color: var(--muted)
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: .65rem;
+      flex-shrink: 0
+    }
+
+    .nav-btn {
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      padding: .42rem .95rem;
+      border-radius: 99px;
+      font-size: .83rem;
+      font-weight: 500;
+      transition: all var(--trans);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .nav-btn:hover {
+      border-color: var(--border-hi);
+      color: var(--text);
+      background: var(--gold-dim)
+    }
+
+    .nav-btn.primary {
+      background: var(--grad-gold);
+      background-size: 200%;
+      color: var(--bg);
+      border-color: transparent;
+      font-weight: 600;
+      box-shadow: 0 2px 14px rgba(245, 158, 11, .3);
+    }
+
+    .nav-btn.primary:hover {
+      background-position: 100%;
+      box-shadow: 0 4px 22px rgba(245, 158, 11, .5);
+      transform: translateY(-1px)
+    }
+
+    .nav-btn.primary:active {
+      transform: translateY(0)
+    }
+
+    .nav-bookmark-count {
+      background: var(--grad-gold);
+      color: var(--bg);
+      border-radius: 99px;
+      padding: 0 .38rem;
+      font-size: .68rem;
+      font-weight: 700;
+      min-width: 17px;
+      text-align: center;
+    }
+
+    .nav-tab {
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      padding: .42rem .95rem;
+      border-radius: 99px;
+      font-size: .83rem;
+      font-weight: 500;
+      color: var(--muted);
+      transition: all var(--trans);
+      border: 1px solid transparent;
+    }
+
+    .nav-tab:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, .05)
+    }
+
+    .nav-tab.active {
+      color: var(--gold);
+      background: var(--gold-dim);
+      border-color: var(--border-hi)
+    }
+
+    .nav-tab-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      animation: pulse 2s infinite
+    }
+
+    /* ═══════════════════════════════════════════════════
+   HERO
+═══════════════════════════════════════════════════ */
+    #hero {
+      position: relative;
+      overflow: hidden;
+      padding: 5.5rem 2rem 4.5rem;
+      text-align: center;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% -5%, rgba(245, 158, 11, .1) 0%, transparent 65%),
+        radial-gradient(ellipse 50% 40% at 15% 85%, rgba(59, 130, 246, .07) 0%, transparent 55%),
+        radial-gradient(ellipse 40% 30% at 85% 70%, rgba(139, 92, 246, .06) 0%, transparent 50%);
+    }
+
+    .hero-orb {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      filter: blur(55px)
+    }
+
+    .hero-orb-1 {
+      width: 320px;
+      height: 320px;
+      top: -80px;
+      left: -60px;
+      background: radial-gradient(circle, rgba(245, 158, 11, .07), transparent);
+      animation: float 9s ease-in-out infinite
+    }
+
+    .hero-orb-2 {
+      width: 260px;
+      height: 260px;
+      top: -30px;
+      right: -50px;
+      background: radial-gradient(circle, rgba(59, 130, 246, .07), transparent);
+      animation: float 11s ease-in-out infinite reverse
+    }
+
+    .hero-orb-3 {
+      width: 200px;
+      height: 200px;
+      bottom: -20px;
+      left: 25%;
+      background: radial-gradient(circle, rgba(139, 92, 246, .05), transparent);
+      animation: float 13s ease-in-out infinite 1.5s
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      background: var(--gold-dim);
+      border: 1px solid var(--border-hi);
+      padding: .3rem .9rem;
+      border-radius: 99px;
+      font-size: .76rem;
+      font-weight: 600;
+      color: var(--gold);
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+      animation: fadeUp .5s ease both;
+    }
+
+    .hero-eyebrow::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      animation: pulse 2s infinite
+    }
+
+    .hero-h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.2rem, 5vw, 3.8rem);
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: -.02em;
+      margin-bottom: 1.1rem;
+      animation: fadeUp .5s .08s ease both;
+    }
+
+    .hero-h1 em {
+      font-style: italic;
+      background: var(--grad-gold);
+      background-size: 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: aurora 3s ease infinite;
+    }
+
+    .hero-sub {
+      font-size: 1rem;
+      color: var(--muted);
+      max-width: 480px;
+      margin: 0 auto 2rem;
+      font-weight: 300;
+      line-height: 1.75;
+      animation: fadeUp .5s .16s ease both;
+    }
+
+    /* Hero CTAs */
+    .hero-ctas {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .85rem;
+      flex-wrap: wrap;
+      margin-bottom: 2.5rem;
+      animation: fadeUp .5s .22s ease both;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      background: var(--grad-gold);
+      background-size: 200%;
+      color: var(--bg);
+      font-weight: 700;
+      font-size: .95rem;
+      padding: .75rem 1.75rem;
+      border-radius: var(--r-md);
+      box-shadow: 0 4px 20px rgba(245, 158, 11, .35);
+      transition: all .3s ease;
+      position: relative;
+      overflow: hidden;
+      border: none;
+    }
+
+    .btn-primary:hover {
+      background-position: 100%;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(245, 158, 11, .5)
+    }
+
+    .btn-primary:active {
+      transform: translateY(0)
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      background: rgba(255, 255, 255, .05);
+      color: var(--text);
+      font-weight: 500;
+      font-size: .95rem;
+      padding: .75rem 1.75rem;
+      border-radius: var(--r-md);
+      border: 1px solid var(--border);
+      transition: all .3s ease;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, .09);
+      border-color: var(--border-hi);
+      transform: translateY(-2px)
+    }
+
+    .btn-secondary:active {
+      transform: translateY(0)
+    }
+
+    /* Ripple shared */
+    .btn-primary,
+    .btn-secondary,
+    .apply-btn,
+    .submit-btn,
+    .nav-btn.primary {
+      position: relative;
+      overflow: hidden
+    }
+
+    .ripple-wave {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .22);
+      pointer-events: none;
+      animation: ripple .55s ease-out forwards;
+      transform-origin: center
+    }
+
+    /* Stats */
+    .hero-stats {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3rem;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+      animation: fadeUp .5s .3s ease both;
+    }
+
+    .stat-item {
+      text-align: center
+    }
+
+    .stat-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.85rem;
+      font-weight: 700;
+      background: var(--grad-gold);
+      background-size: 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      display: block;
+      line-height: 1.1;
+    }
+
+    .stat-label {
+      font-size: .74rem;
+      color: var(--muted);
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      font-weight: 500;
+      margin-top: .15rem
+    }
+
+    .stat-divider {
+      width: 1px;
+      height: 36px;
+      background: var(--border)
+    }
+
+    /* Trust badges */
+    .trust-badges {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      animation: fadeUp .5s .38s ease both;
+    }
+
+    .trust-badge {
+      display: flex;
+      align-items: center;
+      gap: .45rem;
+      font-size: .78rem;
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    .trust-badge svg {
+      color: var(--green);
+      flex-shrink: 0
+    }
+
+    .trust-sep {
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: var(--subtle)
+    }
+
+    /* ═══════════════════════════════════════════════════
+   PAGES
+═══════════════════════════════════════════════════ */
+    .page {
+      display: none
+    }
+
+    .page.active {
+      display: block
+    }
+
+    /* ═══════════════════════════════════════════════════
+   MAIN LAYOUT
+═══════════════════════════════════════════════════ */
+    #main {
+      display: grid;
+      grid-template-columns: 272px 1fr;
+      gap: 1.75rem;
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 2rem;
+      align-items: start;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ═══════════════════════════════════════════════════
+   SIDEBAR — ACCORDION FILTERS
+═══════════════════════════════════════════════════ */
+    #sidebar {
+      position: sticky;
+      top: 72px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-top: 2px solid transparent;
+      background-clip: padding-box;
+      border-radius: var(--r-lg);
+      overflow: hidden;
+      animation: fadeIn .45s ease both;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, .3);
+      transition: transform .35s ease, opacity .35s ease;
+    }
+
+    #sidebar::before {
+      content: '';
+      position: absolute;
+      top: -1px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--grad-aurora);
+      border-radius: var(--r-lg) var(--r-lg) 0 0;
+    }
+
+    /* Mobile drawer overlay */
+    .sidebar-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 149;
+      background: rgba(0, 0, 0, .6);
+      backdrop-filter: blur(4px);
+      opacity: 0;
+      transition: opacity .3s;
+    }
+
+    .sidebar-backdrop.visible {
+      opacity: 1
+    }
+
+    .sidebar-header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.1rem 1.25rem .9rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-title-row {
+      display: flex;
+      align-items: center;
+      gap: .6rem
+    }
+
+    .sidebar-title {
+      font-size: .9rem;
+      font-weight: 600;
+      color: var(--text)
+    }
+
+    .active-filter-badge {
+      background: var(--grad-gold);
+      color: var(--bg);
+      border-radius: 99px;
+      padding: .05rem .45rem;
+      font-size: .68rem;
+      font-weight: 700;
+      transition: transform var(--trans-spring);
+    }
+
+    .active-filter-badge.bump {
+      animation: bounce-in .3s ease
+    }
+
+    .clear-btn {
+      font-size: .76rem;
+      color: var(--gold);
+      font-weight: 500;
+      padding: .2rem .45rem;
+      border-radius: 4px;
+      transition: background var(--trans);
+    }
+
+    .clear-btn:hover {
+      background: var(--gold-dim)
+    }
+
+    .sidebar-close-btn {
+      display: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      align-items: center;
+      justify-content: center;
+      transition: all var(--trans);
+    }
+
+    .sidebar-close-btn:hover {
+      border-color: var(--red);
+      color: var(--red);
+      background: rgba(239, 68, 68, .1)
+    }
+
+    /* Accordion group */
+    .acc-trigger {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .85rem 1.25rem;
+      font-size: .8rem;
+      font-weight: 600;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: none;
+      border: none;
+      border-bottom: 1px solid var(--border);
+      transition: color var(--trans), background var(--trans);
+      cursor: pointer;
+    }
+
+    .acc-trigger:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, .02)
+    }
+
+    .acc-trigger[aria-expanded="true"] {
+      color: var(--text)
+    }
+
+    .acc-chevron {
+      transition: transform .25s ease;
+      color: var(--subtle);
+      flex-shrink: 0
+    }
+
+    .acc-trigger[aria-expanded="true"] .acc-chevron {
+      transform: rotate(180deg)
+    }
+
+    .acc-body {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height .3s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    .acc-body.open {
+      max-height: 400px
+    }
+
+    .acc-content {
+      padding: .85rem 1.25rem 1rem
+    }
+
+    /* Filter controls */
+    .filter-select {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: var(--r-sm);
+      padding: .5rem .7rem;
+      font-size: .84rem;
+      appearance: none;
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237d8fa8' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right .7rem center;
+      padding-right: 2rem;
+      transition: border-color var(--trans);
+    }
+
+    .filter-select:focus {
+      border-color: var(--border-hi);
+      outline: none;
+      box-shadow: 0 0 0 3px var(--gold-dim)
+    }
+
+    .filter-select option {
+      background: var(--card)
+    }
+
+    .filter-input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: var(--r-sm);
+      padding: .5rem .7rem;
+      font-size: .84rem;
+      transition: border-color var(--trans);
+    }
+
+    .filter-input:focus {
+      border-color: var(--border-hi);
+      outline: none;
+      box-shadow: 0 0 0 3px var(--gold-dim)
+    }
+
+    .filter-input::placeholder {
+      color: var(--muted)
+    }
+
+    /* Salary Range Slider */
+    .range-wrap {
+      padding: .35rem 0
+    }
+
+    .range-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: .76rem;
+      color: var(--muted);
+      margin-bottom: .5rem
+    }
+
+    .range-labels span {
+      color: var(--gold);
+      font-weight: 600
+    }
+
+    input[type=range] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--gold) var(--pct, 0%), var(--surface) var(--pct, 0%));
+      border-radius: 99px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--grad-gold);
+      border: 2px solid var(--bg);
+      box-shadow: 0 2px 8px rgba(245, 158, 11, .4);
+      transition: transform var(--trans-spring), box-shadow .2s;
+    }
+
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.25);
+      box-shadow: 0 2px 16px rgba(245, 158, 11, .6)
+    }
+
+    /* Toggle Switch */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .25rem 0
+    }
+
+    .toggle-label {
+      font-size: .875rem;
+      color: var(--muted)
+    }
+
+    .toggle {
+      position: relative;
+      width: 40px;
+      height: 22px;
+      flex-shrink: 0
+    }
+
+    .toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0
+    }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      cursor: pointer;
+      transition: background .25s, border-color .25s;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      left: 2px;
+      top: 2px;
+      background: var(--muted);
+      border-radius: 50%;
+      transition: transform .25s var(--trans-spring), background .25s;
+    }
+
+    .toggle input:checked+.toggle-slider {
+      background: var(--gold-dim);
+      border-color: var(--border-hi)
+    }
+
+    .toggle input:checked+.toggle-slider::before {
+      transform: translateX(18px);
+      background: var(--gold)
+    }
+
+    /* ═══════════════════════════════════════════════════
+   JOBS AREA
+═══════════════════════════════════════════════════ */
+    #jobs-area {
+      display: flex;
+      flex-direction: column;
+      min-width: 0
+    }
+
+    .jobs-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.1rem;
+      flex-wrap: wrap;
+      gap: .65rem;
+    }
+
+    .jobs-count {
+      font-size: .85rem;
+      color: var(--muted)
+    }
+
+    .jobs-count strong {
+      color: var(--text);
+      font-weight: 600
+    }
+
+    .sort-select {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: var(--r-sm);
+      padding: .42rem .65rem;
+      font-size: .8rem;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237d8fa8' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right .55rem center;
+      padding-right: 1.7rem;
+    }
+
+    .sort-select:focus {
+      border-color: var(--border-hi);
+      outline: none
+    }
+
+    .sort-select option {
+      background: var(--card)
+    }
+
+    .active-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .45rem;
+      margin-bottom: .85rem
+    }
+
+    .filter-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: .32rem;
+      background: linear-gradient(135deg, rgba(245, 158, 11, .14), rgba(249, 115, 22, .08));
+      border: 1px solid var(--border-hi);
+      color: var(--gold);
+      border-radius: 99px;
+      padding: .22rem .65rem;
+      font-size: .73rem;
+      font-weight: 500;
+      transition: transform .2s, box-shadow .2s;
+    }
+
+    .filter-tag:hover {
+      transform: scale(1.04);
+      box-shadow: 0 2px 10px rgba(245, 158, 11, .18)
+    }
+
+    .filter-tag button {
+      color: var(--gold);
+      font-size: .8rem;
+      line-height: 1;
+      border-radius: 50%;
+      width: 14px;
+      height: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center
+    }
+
+    .filter-tag button:hover {
+      background: rgba(245, 158, 11, .25)
+    }
+
+    #mobile-filter-btn {
+      display: none;
+      align-items: center;
+      gap: .5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: var(--r-sm);
+      padding: .5rem .95rem;
+      font-size: .84rem;
+      font-weight: 500;
+      margin-bottom: .85rem;
+      transition: all var(--trans);
+    }
+
+    #mobile-filter-btn:hover {
+      border-color: var(--border-hi)
+    }
+
+    /* ═══════════════════════════════════════════════════
+   JOB CARDS — IMPROVED HIERARCHY
+═══════════════════════════════════════════════════ */
+    #jobs-grid {
+      display: flex;
+      flex-direction: column;
+      gap: .85rem
+    }
+
+    .job-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 1.35rem 1.5rem;
+      cursor: pointer;
+      transition: all .28s cubic-bezier(.4, 0, .2, 1);
+      position: relative;
+      overflow: hidden;
+      animation: fadeUp .35s ease both;
+    }
+
+    .job-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: transparent;
+      transition: background .25s;
+      border-radius: 3px 0 0 3px;
+    }
+
+    .job-card:hover {
+      border-color: rgba(245, 158, 11, .25);
+      background: var(--card-hi);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, .3), 0 0 0 1px rgba(245, 158, 11, .06);
+    }
+
+    .job-card:hover::before {
+      background: var(--gold)
+    }
+
+    .job-card.bookmarked::before {
+      background: var(--blue)
+    }
+
+    .job-card.viewed {
+      opacity: .9
+    }
+
+    /* stagger */
+    #jobs-grid .job-card:nth-child(1) {
+      animation-delay: .04s
+    }
+
+    #jobs-grid .job-card:nth-child(2) {
+      animation-delay: .08s
+    }
+
+    #jobs-grid .job-card:nth-child(3) {
+      animation-delay: .12s
+    }
+
+    #jobs-grid .job-card:nth-child(4) {
+      animation-delay: .16s
+    }
+
+    #jobs-grid .job-card:nth-child(5) {
+      animation-delay: .2s
+    }
+
+    #jobs-grid .job-card:nth-child(6) {
+      animation-delay: .24s
+    }
+
+    #jobs-grid .job-card:nth-child(7) {
+      animation-delay: .28s
+    }
+
+    #jobs-grid .job-card:nth-child(8) {
+      animation-delay: .32s
+    }
+
+    /* Card layout */
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: .85rem
+    }
+
+    .card-company-row {
+      display: flex;
+      align-items: center;
+      gap: .7rem
+    }
+
+    .company-logo {
+      width: 42px;
+      height: 42px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: .85rem;
+      color: var(--gold);
+      flex-shrink: 0;
+      font-family: 'Playfair Display', serif;
+      overflow: hidden;
+    }
+
+    .company-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover
+    }
+
+    /* Priority 1: Job title */
+    .job-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.3;
+      margin-bottom: .1rem
+    }
+
+    /* Priority 2: Salary — prominently displayed */
+    .salary-prominent {
+      font-size: .95rem;
+      font-weight: 700;
+      background: var(--grad-green);
+      background-size: 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      display: flex;
+      align-items: center;
+      gap: .3rem;
+      margin-bottom: .15rem;
+    }
+
+    .salary-prominent.undisclosed {
+      background: none;
+      -webkit-text-fill-color: var(--muted);
+      font-weight: 400;
+      font-size: .82rem
+    }
+
+    /* Priority 3: Company */
+    .company-name {
+      font-size: .8rem;
+      color: var(--muted);
+      font-weight: 400
+    }
+
+    .card-actions {
+      display: flex;
+      align-items: center;
+      gap: .45rem;
+      flex-shrink: 0
+    }
+
+    .bookmark-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      transition: all var(--trans);
+    }
+
+    .bookmark-btn:hover {
+      border-color: var(--blue);
+      color: var(--blue);
+      background: var(--blue-dim)
+    }
+
+    .bookmark-btn.active {
+      border-color: var(--blue);
+      color: var(--blue);
+      background: var(--blue-dim)
+    }
+
+    /* Mini Apply Now button on card */
+    .card-apply-btn {
+      display: flex;
+      align-items: center;
+      gap: .3rem;
+      background: var(--gold-dim);
+      border: 1px solid var(--border-hi);
+      color: var(--gold);
+      border-radius: 7px;
+      padding: .3rem .7rem;
+      font-size: .76rem;
+      font-weight: 600;
+      transition: all var(--trans);
+      white-space: nowrap;
+    }
+
+    .card-apply-btn:hover {
+      background: var(--grad-gold);
+      color: var(--bg);
+      border-color: transparent;
+      box-shadow: 0 2px 10px rgba(245, 158, 11, .3)
+    }
+
+    .card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .35rem;
+      margin-bottom: .75rem
+    }
+
+    .tag {
+      padding: .2rem .65rem;
+      border-radius: 99px;
+      font-size: .7rem;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: .28rem;
+    }
+
+    .tag-type {
+      background: var(--gold-dim);
+      color: var(--gold);
+      border: 1px solid rgba(245, 158, 11, .18)
+    }
+
+    .tag-remote {
+      background: var(--green-dim);
+      color: var(--green);
+      border: 1px solid rgba(16, 185, 129, .18)
+    }
+
+    .tag-cat {
+      background: var(--surface);
+      color: var(--muted);
+      border: 1px solid var(--border)
+    }
+
+    .tag-exp {
+      background: var(--blue-dim);
+      color: var(--blue);
+      border: 1px solid rgba(59, 130, 246, .18)
+    }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem
+    }
+
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: .3rem;
+      font-size: .78rem;
+      color: var(--muted)
+    }
+
+    .meta-item svg {
+      flex-shrink: 0;
+      opacity: .65
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: .85rem;
+      padding-top: .85rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .posted-ago {
+      font-size: .73rem;
+      color: var(--subtle);
+      display: flex;
+      align-items: center;
+      gap: .28rem
+    }
+
+    .deadline-badge {
+      font-size: .73rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: .28rem
+    }
+
+    .deadline-badge.urgent {
+      color: #f97316
+    }
+
+    .openings-badge {
+      font-size: .73rem;
+      background: var(--green-dim);
+      color: var(--green);
+      border: 1px solid rgba(16, 185, 129, .18);
+      padding: .18rem .55rem;
+      border-radius: 99px;
+      font-weight: 500;
+    }
+
+    /* ═══════════════════════════════════════════════════
+   SKELETON LOADER
+═══════════════════════════════════════════════════ */
+    .skeleton-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 1.35rem 1.5rem
+    }
+
+    .skeleton {
+      background: linear-gradient(90deg, var(--surface) 25%, var(--card-hi) 50%, var(--surface) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 4px;
+    }
+
+    .sk-1 {
+      height: 13px;
+      width: 40%;
+      margin-bottom: .65rem
+    }
+
+    .sk-2 {
+      height: 19px;
+      width: 68%;
+      margin-bottom: .45rem
+    }
+
+    .sk-3 {
+      height: 13px;
+      width: 52%;
+      margin-bottom: .9rem
+    }
+
+    .sk-tags {
+      display: flex;
+      gap: .45rem;
+      margin-bottom: .9rem
+    }
+
+    .sk-tag {
+      height: 20px;
+      width: 75px;
+      border-radius: 99px
+    }
+
+    .sk-meta {
+      display: flex;
+      gap: 1.25rem
+    }
+
+    .sk-meta-i {
+      height: 13px;
+      width: 90px
+    }
+
+    /* ═══════════════════════════════════════════════════
+   INFINITE SCROLL SENTINEL
+═══════════════════════════════════════════════════ */
+    #load-more-sentinel {
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: .5rem
+    }
+
+    .load-spinner {
+      width: 24px;
+      height: 24px;
+      border: 2px solid var(--border);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin .75s linear infinite;
+      opacity: 0;
+      transition: opacity .3s;
+    }
+
+    .load-spinner.visible {
+      opacity: 1
+    }
+
+    /* ═══════════════════════════════════════════════════
+   EMPTY STATE
+═══════════════════════════════════════════════════ */
+    #empty-state {
+      text-align: center;
+      padding: 5rem 2rem;
+      animation: fadeIn .35s ease
+    }
+
+    .empty-icon {
+      font-size: 3.2rem;
+      margin-bottom: .85rem;
+      opacity: .38
+    }
+
+    .empty-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      margin-bottom: .4rem
+    }
+
+    .empty-sub {
+      color: var(--muted);
+      font-size: .875rem
+    }
+
+    /* ═══════════════════════════════════════════════════
+   RECENTLY VIEWED
+═══════════════════════════════════════════════════ */
+    #recently-viewed-section {
+      margin-bottom: 1.25rem;
+      display: none
+    }
+
+    .section-label {
+      font-size: .72rem;
+      font-weight: 600;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: .65rem;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border)
+    }
+
+    .rv-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .45rem
+    }
+
+    .rv-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 99px;
+      padding: .22rem .7rem;
+      font-size: .75rem;
+      transition: all var(--trans);
+      cursor: pointer;
+    }
+
+    .rv-chip:hover {
+      border-color: var(--border-hi);
+      color: var(--text)
+    }
+
+    .rv-chip-close {
+      font-size: .8rem;
+      opacity: .5;
+      transition: opacity .2s
+    }
+
+    .rv-chip:hover .rv-chip-close {
+      opacity: 1
+    }
+
+    /* ═══════════════════════════════════════════════════
+   MODAL OVERLAY
+═══════════════════════════════════════════════════ */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: rgba(0, 0, 0, .72);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 2.5rem 1rem;
+      overflow-y: auto;
+      animation: fadeIn .2s ease;
+    }
+
+    .modal-overlay.hidden {
+      display: none !important
+    }
+
+    .modal {
+      background: var(--card);
+      border: 1px solid rgba(255, 255, 255, .09);
+      border-radius: var(--r-xl);
+      width: 100%;
+      max-width: 760px;
+      box-shadow: var(--shadow-lg);
+      animation: bounce-in .35s ease both;
+      position: relative;
+      overflow: hidden;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 1.1rem;
+      right: 1.1rem;
+      width: 30px;
+      height: 30px;
+      border-radius: 7px;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      transition: all var(--trans);
+      background: var(--card);
+    }
+
+    .modal-close:hover {
+      border-color: var(--red);
+      color: var(--red);
+      background: rgba(239, 68, 68, .1)
+    }
+
+    /* ═══════════════════════════════════════════════════
+   JOB DETAIL MODAL
+═══════════════════════════════════════════════════ */
+    /* Sticky header */
+    .detail-header {
+      padding: 1.75rem 2rem 1.25rem;
+      background: linear-gradient(180deg, var(--card-hi), var(--card));
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      flex-shrink: 0;
+    }
+
+    .detail-anchor-nav {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+      padding-bottom: .85rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .anchor-link {
+      font-size: .74rem;
+      font-weight: 500;
+      color: var(--muted);
+      padding: .22rem .6rem;
+      border-radius: 99px;
+      transition: all var(--trans);
+      border: 1px solid transparent;
+    }
+
+    .anchor-link:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, .05);
+      border-color: var(--border)
+    }
+
+    .anchor-link.active {
+      color: var(--gold);
+      background: var(--gold-dim);
+      border-color: var(--border-hi)
+    }
+
+    .detail-company-row {
+      display: flex;
+      align-items: center;
+      gap: .85rem;
+      margin-bottom: 1.1rem
+    }
+
+    .detail-logo {
+      width: 52px;
+      height: 52px;
+      border-radius: 11px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.15rem;
+      color: var(--gold);
+      font-family: 'Playfair Display', serif;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .detail-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover
+    }
+
+    .detail-company-name {
+      font-size: .82rem;
+      color: var(--muted)
+    }
+
+    .detail-company-website {
+      font-size: .76rem;
+      color: var(--gold);
+      display: flex;
+      align-items: center;
+      gap: .22rem
+    }
+
+    .detail-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.65rem;
+      font-weight: 700;
+      margin-bottom: .9rem
+    }
+
+    .detail-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .45rem;
+      margin-bottom: 1.1rem
+    }
+
+    .detail-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+      gap: .65rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 1.1rem;
+    }
+
+    .detail-meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: .18rem
+    }
+
+    .detail-meta-label {
+      font-size: .68rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--muted);
+      font-weight: 600
+    }
+
+    .detail-meta-value {
+      font-size: .88rem;
+      font-weight: 500;
+      color: var(--text)
+    }
+
+    .detail-meta-value.salary {
+      background: var(--grad-green);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    /* Scrollable modal body */
+    .detail-scroll-body {
+      overflow-y: auto;
+      flex: 1
+    }
+
+    .detail-body {
+      padding: 1.5rem 2rem
+    }
+
+    .detail-section {
+      margin-bottom: 1.6rem;
+      scroll-margin-top: 120px
+    }
+
+    .detail-section-title {
+      font-size: .75rem;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      font-weight: 700;
+      margin-bottom: .7rem;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      background: var(--grad-gold);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .detail-section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(245, 158, 11, .3), transparent);
+      -webkit-text-fill-color: initial
+    }
+
+    .detail-desc {
+      font-size: .875rem;
+      color: var(--muted);
+      line-height: 1.82
+    }
+
+    .detail-list {
+      display: flex;
+      flex-direction: column;
+      gap: .45rem
+    }
+
+    .detail-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: .55rem;
+      font-size: .84rem;
+      color: var(--muted);
+      line-height: 1.6
+    }
+
+    .detail-list li::before {
+      content: '';
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--gold);
+      flex-shrink: 0;
+      margin-top: .58rem
+    }
+
+    .detail-skill-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .45rem
+    }
+
+    .skill-tag {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 6px;
+      padding: .26rem .65rem;
+      font-size: .76rem
+    }
+
+    /* Sticky floating apply */
+    .detail-footer {
+      padding: 1.1rem 2rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: .85rem;
+      flex-shrink: 0;
+      background: var(--card);
+      position: sticky;
+      bottom: 0;
+      z-index: 5;
+    }
+
+    .detail-footer-info {
+      font-size: .78rem;
+      color: var(--muted)
+    }
+
+    .detail-footer-info strong {
+      color: var(--text)
+    }
+
+    .apply-btn {
+      display: flex;
+      align-items: center;
+      gap: .45rem;
+      background: var(--grad-gold);
+      background-size: 200%;
+      color: var(--bg);
+      padding: .7rem 1.75rem;
+      border-radius: var(--r-md);
+      font-weight: 700;
+      font-size: .92rem;
+      transition: all .3s ease;
+      box-shadow: 0 4px 18px rgba(245, 158, 11, .3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .apply-btn:hover {
+      background-position: 100%;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(245, 158, 11, .5)
+    }
+
+    .apply-btn:active {
+      transform: translateY(0)
+    }
+
+    /* ═══════════════════════════════════════════════════
+   2-STEP APPLY MODAL
+═══════════════════════════════════════════════════ */
+    .apply-modal .modal {
+      max-width: 580px
+    }
+
+    /* Step indicator */
+    .step-indicator {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .5rem;
+      padding: 1.25rem 2rem .9rem;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .step-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .72rem;
+      font-weight: 700;
+      color: var(--muted);
+      transition: all .3s ease;
+    }
+
+    .step-dot.active {
+      border-color: var(--gold);
+      color: var(--gold);
+      background: var(--gold-dim)
+    }
+
+    .step-dot.done {
+      border-color: var(--green);
+      background: var(--green-dim);
+      color: var(--green)
+    }
+
+    .step-dot.done::after {
+      content: '✓'
+    }
+
+    .step-dot.done span {
+      display: none
+    }
+
+    .step-line {
+      flex: 1;
+      max-width: 60px;
+      height: 2px;
+      background: var(--border);
+      border-radius: 99px;
+      transition: background .3s
+    }
+
+    .step-line.done {
+      background: linear-gradient(90deg, var(--green), var(--gold))
+    }
+
+    .step-label {
+      font-size: .72rem;
+      color: var(--muted);
+      font-weight: 500
+    }
+
+    .apply-header {
+      padding: 1.1rem 2rem .85rem;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0
+    }
+
+    .apply-header h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      margin-bottom: .2rem
+    }
+
+    .apply-header p {
+      font-size: .83rem;
+      color: var(--muted)
+    }
+
+    .apply-scroll-body {
+      overflow-y: auto;
+      flex: 1
+    }
+
+    .apply-body {
+      padding: 1.25rem 2rem 1.75rem
+    }
+
+    .apply-step {
+      display: none
+    }
+
+    .apply-step.active {
+      display: block;
+      animation: fadeUp .3s ease both
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .85rem
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: .38rem
+    }
+
+    .form-group.full {
+      grid-column: 1/-1
+    }
+
+    .form-label {
+      font-size: .74rem;
+      font-weight: 600;
+      letter-spacing: .03em;
+      color: var(--muted);
+      text-transform: uppercase
+    }
+
+    .form-label span {
+      color: var(--gold)
+    }
+
+    .form-input,
+    .form-textarea {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: var(--r-sm);
+      padding: .6rem .8rem;
+      font-size: .875rem;
+      transition: border-color var(--trans), box-shadow var(--trans);
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .form-input:focus,
+    .form-textarea:focus {
+      border-color: var(--border-hi);
+      outline: none;
+      box-shadow: 0 0 0 3px var(--gold-dim)
+    }
+
+    .form-input::placeholder,
+    .form-textarea::placeholder {
+      color: var(--muted)
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 96px
+    }
+
+    .form-input.error {
+      border-color: var(--red)
+    }
+
+    .field-error {
+      font-size: .73rem;
+      color: var(--red);
+      margin-top: .18rem
+    }
+
+    .step-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .65rem;
+      margin-top: 1.1rem
+    }
+
+    .btn-next {
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      background: var(--grad-gold);
+      background-size: 200%;
+      color: var(--bg);
+      padding: .7rem 1.5rem;
+      border-radius: var(--r-md);
+      font-weight: 700;
+      font-size: .9rem;
+      transition: all .3s ease;
+      box-shadow: 0 3px 14px rgba(245, 158, 11, .3);
+    }
+
+    .btn-next:hover {
+      background-position: 100%;
+      box-shadow: 0 6px 22px rgba(245, 158, 11, .45);
+      transform: translateY(-1px)
+    }
+
+    .btn-back {
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      background: rgba(255, 255, 255, .05);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: .7rem 1.25rem;
+      border-radius: var(--r-md);
+      font-size: .9rem;
+      transition: all var(--trans);
+    }
+
+    .btn-back:hover {
+      background: rgba(255, 255, 255, .09);
+      color: var(--text)
+    }
+
+    .submit-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .45rem;
+      background: var(--grad-gold);
+      background-size: 200%;
+      color: var(--bg);
+      padding: .72rem;
+      border-radius: var(--r-md);
+      font-weight: 700;
+      font-size: .95rem;
+      transition: all .3s ease;
+      box-shadow: 0 3px 14px rgba(245, 158, 11, .3);
+    }
+
+    .submit-btn:hover {
+      background-position: 100%;
+      box-shadow: 0 6px 22px rgba(245, 158, 11, .45);
+      transform: translateY(-1px)
+    }
+
+    .submit-btn:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+      transform: none
+    }
+
+    .submit-btn .spinner {
+      width: 17px;
+      height: 17px;
+      border: 2px solid rgba(0, 0, 0, .2);
+      border-top-color: var(--bg);
+      border-radius: 50%;
+      animation: spin .8s linear infinite
+    }
+
+    /* ═══════════════════════════════════════════════════
+   SUCCESS STATE
+═══════════════════════════════════════════════════ */
+    .success-state {
+      text-align: center;
+      padding: 3rem 2rem;
+      animation: fadeUp .4s ease
+    }
+
+    .success-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: var(--green-dim);
+      border: 2px solid var(--green);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.25rem;
+      font-size: 1.7rem;
+      animation: checkIn .5s var(--trans-spring) both;
+    }
+
+    .success-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.55rem;
+      margin-bottom: .45rem
+    }
+
+    .success-sub {
+      color: var(--muted);
+      font-size: .875rem;
+      max-width: 320px;
+      margin: 0 auto
+    }
+
+    /* ═══════════════════════════════════════════════════
+   BOOKMARKS MODAL
+═══════════════════════════════════════════════════ */
+    .bookmarks-modal .modal {
+      max-width: 680px
+    }
+
+    .bookmarks-header {
+      padding: 1.5rem 2rem 1.1rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .bookmarks-header h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem
+    }
+
+    .bookmarks-body {
+      padding: 1.25rem 2rem;
+      max-height: 65vh;
+      overflow-y: auto
+    }
+
+    .bookmark-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: .9rem 1.15rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .85rem;
+      margin-bottom: .65rem;
+      cursor: pointer;
+      transition: all var(--trans);
+    }
+
+    .bookmark-item:hover {
+      border-color: var(--border-hi);
+      background: var(--card)
+    }
+
+    .bookmark-item-left {
+      flex: 1;
+      min-width: 0
+    }
+
+    .bookmark-item-title {
+      font-weight: 600;
+      margin-bottom: .18rem;
+      font-size: .92rem
+    }
+
+    .bookmark-item-company {
+      font-size: .78rem;
+      color: var(--muted)
+    }
+
+    .bookmark-remove {
+      color: var(--muted);
+      padding: .32rem;
+      border-radius: 6px;
+      transition: all var(--trans);
+      flex-shrink: 0
+    }
+
+    .bookmark-remove:hover {
+      color: var(--red);
+      background: rgba(239, 68, 68, .1)
+    }
+
+    /* ═══════════════════════════════════════════════════
+   MY APPLICATIONS PAGE
+═══════════════════════════════════════════════════ */
+    #applications-page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem
+    }
+
+    .page-header {
+      margin-bottom: 2rem
+    }
+
+    .page-header h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: .35rem
+    }
+
+    .page-header p {
+      color: var(--muted);
+      font-size: .9rem
+    }
+
+    .apps-grid {
+      display: flex;
+      flex-direction: column;
+      gap: .75rem
+    }
+
+    .app-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      transition: all var(--trans);
+      animation: fadeUp .35s ease both;
+    }
+
+    .app-card:hover {
+      border-color: rgba(255, 255, 255, .12);
+      background: var(--card-hi)
+    }
+
+    .app-logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: .88rem;
+      color: var(--gold);
+      font-family: 'Playfair Display', serif;
+      flex-shrink: 0;
+    }
+
+    .app-info {
+      flex: 1;
+      min-width: 0
+    }
+
+    .app-title {
+      font-weight: 600;
+      font-size: .95rem;
+      margin-bottom: .15rem
+    }
+
+    .app-company {
+      font-size: .8rem;
+      color: var(--muted)
+    }
+
+    .app-date {
+      font-size: .75rem;
+      color: var(--subtle);
+      display: flex;
+      align-items: center;
+      gap: .3rem;
+      margin-top: .25rem
+    }
+
+    /* Status badges */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      padding: .28rem .75rem;
+      border-radius: 99px;
+      font-size: .75rem;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .status-badge.pending {
+      background: rgba(245, 158, 11, .12);
+      border: 1px solid rgba(245, 158, 11, .25);
+      color: var(--gold)
+    }
+
+    .status-badge.reviewing {
+      background: rgba(59, 130, 246, .12);
+      border: 1px solid rgba(59, 130, 246, .25);
+      color: var(--blue)
+    }
+
+    .status-badge.interview {
+      background: rgba(139, 92, 246, .12);
+      border: 1px solid rgba(139, 92, 246, .25);
+      color: var(--purple)
+    }
+
+    .status-badge.offered {
+      background: var(--green-dim);
+      border: 1px solid rgba(16, 185, 129, .25);
+      color: var(--green)
+    }
+
+    .status-badge.rejected {
+      background: rgba(239, 68, 68, .1);
+      border: 1px solid rgba(239, 68, 68, .22);
+      color: var(--red)
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: pulse 2s infinite
+    }
+
+    .apps-empty {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--muted)
+    }
+
+    .apps-empty .empty-icon {
+      font-size: 3rem;
+      margin-bottom: .85rem;
+      opacity: .35
+    }
+
+    .apps-empty p {
+      font-size: .9rem
+    }
+
+    /* ═══════════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════════ */
+    #toast-container {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      gap: .45rem;
+      pointer-events: none
+    }
+
+    .toast {
+      display: flex;
+      align-items: center;
+      gap: .65rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: .8rem 1.15rem;
+      box-shadow: var(--shadow);
+      font-size: .83rem;
+      font-weight: 500;
+      pointer-events: all;
+      animation: slideInR .28s ease both;
+      max-width: 320px;
+    }
+
+    .toast-icon {
+      font-size: 1rem;
+      flex-shrink: 0
+    }
+
+    .toast.success {
+      border-color: rgba(16, 185, 129, .35);
+      background: rgba(16, 185, 129, .07)
+    }
+
+    .toast.error {
+      border-color: rgba(239, 68, 68, .35);
+      background: rgba(239, 68, 68, .07)
+    }
+
+    .toast.info {
+      border-color: var(--border-hi);
+      background: linear-gradient(135deg, rgba(245, 158, 11, .1), rgba(249, 115, 22, .05))
+    }
+
+    .toast-close {
+      margin-left: auto;
+      color: var(--muted);
+      font-size: .95rem;
+      padding: .18rem
+    }
+
+    .toast-close:hover {
+      color: var(--text)
+    }
+
+    /* ═══════════════════════════════════════════════════
+   MOBILE BOTTOM APPLY BAR
+═══════════════════════════════════════════════════ */
+    #mobile-apply-bar {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 180;
+      padding: .85rem 1.25rem calc(.85rem + env(safe-area-inset-bottom));
+      background: rgba(7, 13, 26, .92);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border);
+      transform: translateY(100%);
+      transition: transform .35s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    #mobile-apply-bar.visible {
+      transform: translateY(0)
+    }
+
+    .mobile-apply-inner {
+      display: flex;
+      align-items: center;
+      gap: .85rem
+    }
+
+    .mobile-apply-info {
+      flex: 1;
+      min-width: 0
+    }
+
+    .mobile-apply-title {
+      font-size: .88rem;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap
+    }
+
+    .mobile-apply-company {
+      font-size: .75rem;
+      color: var(--muted)
+    }
+
+    .mobile-apply-btn {
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      flex-shrink: 0;
+      background: var(--grad-gold);
+      color: var(--bg);
+      padding: .65rem 1.35rem;
+      border-radius: var(--r-md);
+      font-weight: 700;
+      font-size: .88rem;
+      box-shadow: 0 3px 14px rgba(245, 158, 11, .35);
+    }
+
+    /* ═══════════════════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════════════════ */
+    footer {
+      text-align: center;
+      padding: 2.25rem 2rem;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: .78rem;
+      margin-top: 3rem;
+      background: linear-gradient(0deg, transparent, rgba(245, 158, 11, .02));
+    }
+
+    footer strong {
+      background: var(--grad-gold);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ═══════════════════════════════════════════════════
+   NOISE OVERLAY
+═══════════════════════════════════════════════════ */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: .35;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='.03'/%3E%3C/svg%3E");
+    }
+
+    /* ═══════════════════════════════════════════════════
+   SCROLL REVEAL
+═══════════════════════════════════════════════════ */
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity .5s ease, transform .5s ease
+    }
+
+    .reveal.revealed {
+      opacity: 1;
+      transform: translateY(0)
+    }
+
+    /* ═══════════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════════ */
+    @media(max-width:1024px) {
+      #main {
+        grid-template-columns: 248px 1fr;
+        gap: 1.35rem
+      }
+    }
+
+    @media(max-width:768px) {
+      #nav {
+        padding: .72rem 1rem
+      }
+
+      .nav-title {
+        display: none
+      }
+
+      .nav-search {
+        max-width: none;
+        flex: 1
+      }
+
+      #hero {
+        padding: 3.5rem 1.25rem 3rem
+      }
+
+      .hero-stats {
+        gap: 1.5rem
+      }
+
+      .stat-divider {
+        display: none
+      }
+
+      #main {
+        grid-template-columns: 1fr;
+        padding: 1.1rem
+      }
+
+      #sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: min(320px, 90vw);
+        z-index: 150;
+        border-radius: 0;
+        border: none;
+        border-right: 1px solid var(--border);
+        transform: translateX(-100%);
+        transition: transform .35s cubic-bezier(.4, 0, .2, 1);
+        overflow-y: auto;
+        top: 0;
+        max-height: 100dvh;
+      }
+
+      #sidebar.open {
+        transform: translateX(0)
+      }
+
+      #sidebar::before {
+        border-radius: 0
+      }
+
+      .sidebar-close-btn {
+        display: flex
+      }
+
+      .sidebar-backdrop {
+        display: block
+      }
+
+      #mobile-filter-btn {
+        display: flex
+      }
+
+      #mobile-apply-bar {
+        display: block
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr
+      }
+
+      .form-group.full {
+        grid-column: auto
+      }
+
+      .detail-meta-grid {
+        grid-template-columns: 1fr 1fr
+      }
+
+      .detail-title {
+        font-size: 1.35rem
+      }
+
+      .apply-body,
+      .detail-body,
+      .detail-header {
+        padding: 1.1rem
+      }
+
+      .detail-footer {
+        flex-direction: column;
+        align-items: stretch
+      }
+
+      .apply-btn {
+        text-align: center;
+        justify-content: center
+      }
+
+      /* Bottom-sheet modals on mobile */
+      .modal-overlay {
+        align-items: flex-end;
+        padding: 0;
+        background: rgba(0, 0, 0, .65);
+      }
+
+      .modal {
+        border-radius: var(--r-xl) var(--r-xl) 0 0;
+        max-height: 92dvh;
+        animation: slideUp .35s cubic-bezier(.4, 0, .2, 1) both;
+      }
+
+      .modal::before {
+        content: '';
+        display: block;
+        width: 40px;
+        height: 4px;
+        border-radius: 99px;
+        background: var(--subtle);
+        margin: .85rem auto .35rem;
+        flex-shrink: 0;
+      }
+
+      /* Hide desktop nav tabs on mobile - show in nav */
+      .nav-tab {
+        display: none
+      }
+
+      #applications-page {
+        padding: 1.1rem
+      }
+    }
+
+    @media(max-width:480px) {
+      .hero-stats {
+        gap: 1.1rem
+      }
+
+      .stat-num {
+        font-size: 1.55rem
+      }
+
+      .card-top {
+        flex-direction: column;
+        gap: .65rem
+      }
+
+      .card-actions {
+        flex-direction: row;
+        justify-content: flex-end
+      }
+
+      .hero-ctas {
+        flex-direction: column;
+        align-items: stretch
+      }
+
+      .btn-primary,
+      .btn-secondary {
+        justify-content: center
+      }
+
+      .detail-meta-grid {
+        grid-template-columns: 1fr
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════
+   GOOGLE AUTH — PROFILE DROPDOWN
+═══════════════════════════════════════════════════ */
+    .profile-wrapper {
+      position: relative
+    }
+
+    .profile-btn {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: .28rem .75rem .28rem .28rem;
+      cursor: pointer;
+      transition: all var(--trans);
+    }
+
+    .profile-btn:hover {
+      border-color: var(--border-hi);
+      background: var(--card)
+    }
+
+    .profile-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--border-hi);
+      flex-shrink: 0;
+    }
+
+    .profile-avatar-placeholder {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--grad-gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .75rem;
+      font-weight: 700;
+      color: var(--bg);
+      flex-shrink: 0;
+    }
+
+    .profile-name-text {
+      font-size: .8rem;
+      font-weight: 500;
+      max-width: 90px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap
+    }
+
+    .profile-chevron {
+      color: var(--muted);
+      transition: transform var(--trans);
+      flex-shrink: 0
+    }
+
+    .profile-btn[aria-expanded=true] .profile-chevron {
+      transform: rotate(180deg)
+    }
+
+    .profile-dropdown {
+      position: absolute;
+      top: calc(100% + .5rem);
+      right: 0;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      min-width: 210px;
+      box-shadow: var(--shadow-lg);
+      z-index: 300;
+      overflow: hidden;
+      animation: fadeUp .18s ease both;
+    }
+
+    .profile-dropdown.hidden {
+      display: none !important
+    }
+
+    .profile-dropdown-header {
+      padding: 1rem 1rem .75rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: .65rem;
+    }
+
+    .profile-dropdown-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--border-hi);
+      flex-shrink: 0;
+    }
+
+    .profile-dropdown-avatar-placeholder {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--grad-gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--bg);
+      flex-shrink: 0;
+    }
+
+    .profile-dropdown-name {
+      font-size: .88rem;
+      font-weight: 600;
+      margin-bottom: .1rem
+    }
+
+    .profile-dropdown-email {
+      font-size: .73rem;
+      color: var(--muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 150px
+    }
+
+    .profile-dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      padding: .7rem 1rem;
+      font-size: .83rem;
+      color: var(--muted);
+      transition: all var(--trans);
+      cursor: pointer;
+      width: 100%;
+      text-align: left;
+    }
+
+    .profile-dropdown-item:hover {
+      background: var(--card-hi);
+      color: var(--text)
+    }
+
+    .profile-dropdown-item svg {
+      flex-shrink: 0
+    }
+
+    .profile-dropdown-item.danger:hover {
+      color: var(--red);
+      background: rgba(239, 68, 68, .08)
+    }
+
+    .profile-dropdown-divider {
+      height: 1px;
+      background: var(--border);
+      margin: .25rem 0
+    }
+
+    /* Google Sign-In gate modal */
+    .auth-gate-modal .modal {
+      max-width: 400px
+    }
+
+    .auth-gate-body {
+      padding: 2.5rem 2rem;
+      text-align: center
+    }
+
+    .auth-gate-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: var(--gold-dim);
+      border: 2px solid var(--border-hi);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.25rem;
+      font-size: 1.75rem;
+    }
+
+    .auth-gate-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      margin-bottom: .5rem
+    }
+
+    .auth-gate-sub {
+      color: var(--muted);
+      font-size: .875rem;
+      line-height: 1.65;
+      margin-bottom: 1.75rem
+    }
+
+    .google-signin-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .7rem;
+      width: 100%;
+      background: #fff;
+      color: #3c4043;
+      border: 1px solid #dadce0;
+      border-radius: var(--r-md);
+      padding: .75rem 1.5rem;
+      font-size: .9rem;
+      font-weight: 500;
+      transition: all var(--trans);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .15);
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .google-signin-btn:hover {
+      background: #f8f9fa;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .2)
+    }
+
+    .google-logo {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0
+    }
+
+    .auth-gate-skip {
+      margin-top: .85rem;
+      font-size: .78rem;
+      color: var(--muted);
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      transition: color var(--trans);
+    }
+
+    .auth-gate-skip:hover {
+      color: var(--text)
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Scroll Progress -->
+  <div id="scroll-progress" aria-hidden="true"></div>
+
+  <!-- SVG ICONS -->
+  <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <symbol id="ico-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8" />
+        <path d="m21 21-4.35-4.35" />
+      </symbol>
+      <symbol id="ico-bookmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />
+      </symbol>
+      <symbol id="ico-bookmark-fill" viewBox="0 0 24 24" fill="currentColor">
+        <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />
+      </symbol>
+      <symbol id="ico-map" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round">
+        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+        <circle cx="12" cy="10" r="3" />
+      </symbol>
+      <symbol id="ico-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <polyline points="12 6 12 12 16 14" />
+      </symbol>
+      <symbol id="ico-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </symbol>
+      <symbol id="ico-dollar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="1" x2="12" y2="23" />
+        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+      </symbol>
+      <symbol id="ico-briefcase" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+      </symbol>
+      <symbol id="ico-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+      </symbol>
+      <symbol id="ico-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round">
+        <path d="M18 6 6 18M6 6l12 12" />
+      </symbol>
+      <symbol id="ico-arrow-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 12h14M12 5l7 7-7 7" />
+      </symbol>
+      <symbol id="ico-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 12H5M12 19l-7-7 7-7" />
+      </symbol>
+      <symbol id="ico-filter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+      </symbol>
+      <symbol id="ico-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+        <circle cx="12" cy="12" r="3" />
+      </symbol>
+      <symbol id="ico-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+        stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12" />
+      </symbol>
+      <symbol id="ico-wifi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 12.55a11 11 0 0 1 14.08 0" />
+        <path d="M1.42 9a16 16 0 0 1 21.16 0" />
+        <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+        <line x1="12" y1="20" x2="12.01" y2="20" />
+      </symbol>
+      <symbol id="ico-chevron-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="m6 9 6 6 6-6" />
+      </symbol>
+      <symbol id="ico-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+        <line x1="16" y1="2" x2="16" y2="6" />
+        <line x1="8" y1="2" x2="8" y2="6" />
+        <line x1="3" y1="10" x2="21" y2="10" />
+      </symbol>
+      <symbol id="ico-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13" />
+        <polygon points="22 2 15 22 11 13 2 9 22 2" />
+      </symbol>
+      <symbol id="ico-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6" />
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+      </symbol>
+      <symbol id="ico-apps" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="7" height="7" />
+        <rect x="14" y="3" width="7" height="7" />
+        <rect x="3" y="14" width="7" height="7" />
+        <rect x="14" y="14" width="7" height="7" />
+      </symbol>
+      <symbol id="ico-building" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="9" width="18" height="12" rx="1" />
+        <path d="M3 9V7a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v2" />
+      </symbol>
+      <symbol id="ico-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <polygon
+          points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+      </symbol>
+      <symbol id="ico-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      </symbol>
+      <symbol id="ico-zap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round">
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+      </symbol>
+    </defs>
+  </svg>
+
+  <!-- ══ NAV ═══════════════════════════════════════════ -->
+  <nav id="nav" role="navigation" aria-label="Main navigation">
+    <div class="nav-brand">
+      <div class="nav-logo" aria-hidden="true">CN</div>
+      <span class="nav-title serif">CareerNest<span></span></span>
+    </div>
+
+    <div class="nav-search" role="search">
+      <svg width="15" height="15" aria-hidden="true">
+        <use href="#ico-search" />
+      </svg>
+      <input id="nav-search-input" type="search" placeholder="Search jobs, skills, companies…"
+        aria-label="Search job listings" />
+    </div>
+
+    <div class="nav-actions">
+      <!-- Page tabs -->
+      <button class="nav-tab active" id="tab-jobs" onclick="showPage('jobs')" aria-label="Browse jobs">
+        <svg width="14" height="14" aria-hidden="true">
+          <use href="#ico-briefcase" />
+        </svg> Jobs
+      </button>
+      <button class="nav-tab hidden" id="tab-apps" onclick="showPage('applications')" aria-label="My applications">
+        <svg width="14" height="14" aria-hidden="true">
+          <use href="#ico-apps" />
+        </svg> My Apps
+        <span class="nav-tab-dot" id="apps-dot" style="display:none"></span>
+      </button>
+      <button class="nav-btn" id="bookmarks-btn" aria-label="View bookmarked jobs">
+        <svg width="14" height="14" aria-hidden="true">
+          <use href="#ico-bookmark" />
+        </svg>
+        Saved
+        <span class="nav-bookmark-count" id="bookmark-count" aria-live="polite">0</span>
+      </button>
+
+      <!-- Google Sign-In (shown when logged out) -->
+      <button class="nav-btn" id="nav-signin-btn" aria-label="Sign in with Google">
+        <svg width="14" height="14" aria-hidden="true" viewBox="0 0 24 24">
+          <path
+            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+            fill="#4285F4" />
+          <path
+            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+            fill="#34A853" />
+          <path
+            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
+            fill="#FBBC05" />
+          <path
+            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+            fill="#EA4335" />
+        </svg>
+        Sign In
+      </button>
+
+      <!-- Profile dropdown (shown when logged in) -->
+      <div class="profile-wrapper hidden" id="profile-wrapper">
+        <button class="profile-btn" id="profile-btn" aria-label="User menu" aria-expanded="false" aria-haspopup="true">
+          <img class="profile-avatar" id="profile-avatar-img" src="" alt="Profile picture" style="display:none" />
+          <div class="profile-avatar-placeholder" id="profile-avatar-placeholder" aria-hidden="true">?</div>
+          <span class="profile-name-text" id="profile-name-text">User</span>
+          <svg class="profile-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" aria-hidden="true">
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </button>
+        <div class="profile-dropdown hidden" id="profile-dropdown" role="menu">
+          <div class="profile-dropdown-header">
+            <img class="profile-dropdown-avatar" id="dd-avatar-img" src="" alt="" style="display:none" />
+            <div class="profile-dropdown-avatar-placeholder" id="dd-avatar-placeholder" aria-hidden="true">?</div>
+            <div>
+              <div class="profile-dropdown-name" id="dd-name">—</div>
+              <div class="profile-dropdown-email" id="dd-email">—</div>
+            </div>
+          </div>
+          <div class="profile-dropdown-divider"></div>
+          <button class="profile-dropdown-item" onclick="showPage('applications')" role="menuitem">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              aria-hidden="true">
+              <path d="M9 11l3 3L22 4" />
+              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+            </svg>
+            My Applications
+          </button>
+          <div class="profile-dropdown-divider"></div>
+          <button class="profile-dropdown-item danger" id="signout-btn" role="menuitem">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              aria-hidden="true">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            Sign Out
+          </button>
+        </div>
+      </div>
+
+      <a class="nav-btn primary" href="admin.html" aria-label="Post a job (admin)">
+        <svg width="14" height="14" aria-hidden="true">
+          <use href="#ico-zap" />
+        </svg>
+        Post a Job
+      </a>
+    </div>
+  </nav>
+
+  <!-- ══ HERO ══════════════════════════════════════════ -->
+  <section id="hero" aria-labelledby="hero-heading">
+    <div class="hero-orb hero-orb-1" aria-hidden="true"></div>
+    <div class="hero-orb hero-orb-2" aria-hidden="true"></div>
+    <div class="hero-orb hero-orb-3" aria-hidden="true"></div>
+
+    <div class="hero-eyebrow" role="banner">
+      Centralized Opportunity Management
+    </div>
+
+    <h1 class="hero-h1 serif" id="hero-heading">
+      Your next chapter<br />starts <em>right here.</em>
+    </h1>
+    <p class="hero-sub">
+      All internships and job openings — from every channel — in one searchable platform built for ambitious students.
+    </p>
+
+    <!-- Dual CTAs -->
+    <div class="hero-ctas">
+      <button class="btn-primary" onclick="document.getElementById('jobs-area').scrollIntoView({behavior:'smooth'})">
+        <svg width="16" height="16" aria-hidden="true">
+          <use href="#ico-search" />
+        </svg>
+        Browse Opportunities
+      </button>
+      <button class="btn-secondary" onclick="window.location.href='admin.html'">
+        <svg width="16" height="16" aria-hidden="true">
+          <use href="#ico-briefcase" />
+        </svg>
+        Post a Job
+      </button>
+    </div>
+
+    <!-- Animated stats -->
+    <div class="hero-stats" id="hero-stats" role="region" aria-label="Platform statistics">
+      <div class="stat-item">
+        <span class="stat-num" id="stat-jobs">—</span>
+        <span class="stat-label">Live Listings</span>
+      </div>
+      <div class="stat-divider" aria-hidden="true"></div>
+      <div class="stat-item">
+        <span class="stat-num" id="stat-companies">—</span>
+        <span class="stat-label">Companies</span>
+      </div>
+      <div class="stat-divider" aria-hidden="true"></div>
+      <div class="stat-item">
+        <span class="stat-num" id="stat-applications">—</span>
+        <span class="stat-label" id="stat-apps-label">Applications</span>
+      </div>
+      <div class="stat-divider" aria-hidden="true"></div>
+      <div class="stat-item">
+        <span class="stat-num" id="stat-internships">—</span>
+        <span class="stat-label">Internships</span>
+      </div>
+    </div>
+
+    <!-- Trust badges -->
+    <div class="trust-badges" role="list" aria-label="Platform trust signals">
+      <div class="trust-badge" role="listitem">
+        <svg width="13" height="13" aria-hidden="true">
+          <use href="#ico-check" />
+        </svg>
+        Verified Listings
+      </div>
+      <div class="trust-sep" aria-hidden="true"></div>
+      <div class="trust-badge" role="listitem">
+        <svg width="13" height="13" aria-hidden="true">
+          <use href="#ico-shield" />
+        </svg>
+        No Spam
+      </div>
+      <div class="trust-sep" aria-hidden="true"></div>
+      <div class="trust-badge" role="listitem">
+        <svg width="13" height="13" aria-hidden="true">
+          <use href="#ico-zap" />
+        </svg>
+        Updated Daily
+      </div>
+      <div class="trust-sep" aria-hidden="true"></div>
+      <div class="trust-badge" role="listitem">
+        <svg width="13" height="13" aria-hidden="true">
+          <use href="#ico-users" />
+        </svg>
+        10+ Students
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ JOBS PAGE ══════════════════════════════════════ -->
+  <div id="jobs-page" class="page active">
+    <main id="main" role="main">
+
+      <!-- Mobile filter toggle -->
+      <button id="mobile-filter-btn" aria-expanded="false" aria-controls="sidebar">
+        <svg width="14" height="14" aria-hidden="true">
+          <use href="#ico-filter" />
+        </svg>
+        Filters
+        <span id="mobile-filter-count" class="active-filter-badge" style="display:none">0</span>
+      </button>
+
+      <!-- Sidebar backdrop (mobile) -->
+      <div class="sidebar-backdrop" id="sidebar-backdrop" aria-hidden="true"></div>
+
+      <!-- ── SIDEBAR ─────────────────────────────────── -->
+      <aside id="sidebar" aria-label="Job filters">
+        <div class="sidebar-header-bar">
+          <div class="sidebar-title-row">
+            <span class="sidebar-title">Filters</span>
+            <span class="active-filter-badge" id="active-filter-badge" style="display:none">0</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:.5rem">
+            <button class="clear-btn" id="clear-filters-btn" aria-label="Clear all filters">Clear all</button>
+            <button class="sidebar-close-btn" id="sidebar-close-btn" aria-label="Close filters">
+              <svg width="14" height="14" aria-hidden="true">
+                <use href="#ico-x" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Category -->
+        <div class="acc-group">
+          <button class="acc-trigger" aria-expanded="true" aria-controls="acc-category">
+            Category
+            <svg class="acc-chevron" width="14" height="14" aria-hidden="true">
+              <use href="#ico-chevron-down" />
+            </svg>
+          </button>
+          <div class="acc-body open" id="acc-category">
+            <div class="acc-content">
+              <select class="filter-select" id="filter-category" aria-label="Filter by category">
+                <option value="">All Categories</option>
+                <option value="Software Engineering">Software Engineering</option>
+                <option value="Data Science">Data Science</option>
+                <option value="Product Management">Product Management</option>
+                <option value="Design">Design</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Finance">Finance</option>
+                <option value="Operations">Operations</option>
+                <option value="Research">Research</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Job Type -->
+        <div class="acc-group">
+          <button class="acc-trigger" aria-expanded="true" aria-controls="acc-type">
+            Job Type
+            <svg class="acc-chevron" width="14" height="14" aria-hidden="true">
+              <use href="#ico-chevron-down" />
+            </svg>
+          </button>
+          <div class="acc-body open" id="acc-type">
+            <div class="acc-content">
+              <select class="filter-select" id="filter-type" aria-label="Filter by job type">
+                <option value="">All Types</option>
+                <option value="Full-time">Full-time</option>
+                <option value="Part-time">Part-time</option>
+                <option value="Internship">Internship</option>
+                <option value="Contract">Contract</option>
+                <option value="Freelance">Freelance</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Experience -->
+        <div class="acc-group">
+          <button class="acc-trigger" aria-expanded="false" aria-controls="acc-exp">
+            Experience Level
+            <svg class="acc-chevron" width="14" height="14" aria-hidden="true">
+              <use href="#ico-chevron-down" />
+            </svg>
+          </button>
+          <div class="acc-body" id="acc-exp">
+            <div class="acc-content">
+              <select class="filter-select" id="filter-exp" aria-label="Filter by experience level">
+                <option value="">Any Level</option>
+                <option value="Entry Level">Entry Level</option>
+                <option value="Mid Level">Mid Level</option>
+                <option value="Senior Level">Senior Level</option>
+                <option value="Lead">Lead</option>
+                <option value="Manager">Manager</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Location -->
+        <div class="acc-group">
+          <button class="acc-trigger" aria-expanded="false" aria-controls="acc-location">
+            Location
+            <svg class="acc-chevron" width="14" height="14" aria-hidden="true">
+              <use href="#ico-chevron-down" />
+            </svg>
+          </button>
+          <div class="acc-body" id="acc-location">
+            <div class="acc-content">
+              <input type="text" class="filter-input" id="filter-location" placeholder="City, state or country…"
+                aria-label="Filter by location" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Remote toggle -->
+        <div class="acc-group">
+          <button class="acc-trigger" aria-expanded="true" aria-controls="acc-remote">
+            Work Mode
+            <svg class="acc-chevron" width="14" height="14" aria-hidden="true">
+              <use href="#ico-chevron-down" />
+            </svg>
+          </button>
+          <div class="acc-body open" id="acc-remote">
+            <div class="acc-content">
+              <div class="toggle-row">
+                <span class="toggle-label">Remote Only</span>
+                <label class="toggle" aria-label="Show remote jobs only">
+                  <input type="checkbox" id="filter-remote" />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Salary Range Slider -->
+        <div class="acc-group">
+          <button class="acc-trigger" aria-expanded="false" aria-controls="acc-salary">
+            Min Salary
+            <svg class="acc-chevron" width="14" height="14" aria-hidden="true">
+              <use href="#ico-chevron-down" />
+            </svg>
+          </button>
+          <div class="acc-body" id="acc-salary">
+            <div class="acc-content">
+              <div class="range-wrap">
+                <div class="range-labels">
+                  <span>₹0</span>
+                  <span id="salary-display">₹<span id="salary-value">0</span>k+</span>
+                </div>
+                <input type="range" id="filter-salary" min="0" max="2000000" step="50000" value="0"
+                  aria-label="Minimum salary filter" style="--pct:0%" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </aside>
+
+      <!-- ── JOBS AREA ────────────────────────────────── -->
+      <section id="jobs-area" aria-label="Job listings">
+
+        <!-- Recently viewed -->
+        <div id="recently-viewed-section">
+          <div class="section-label">
+            <svg width="12" height="12" aria-hidden="true">
+              <use href="#ico-eye" />
+            </svg>
+            Recently Viewed
+          </div>
+          <div class="rv-chips" id="rv-chips"></div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="jobs-toolbar">
+          <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
+            <p class="jobs-count" id="jobs-count" aria-live="polite"></p>
+          </div>
+          <select class="sort-select" id="sort-select" aria-label="Sort job listings">
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="salary_high">Salary: High → Low</option>
+            <option value="salary_low">Salary: Low → High</option>
+            <option value="most_applied">Most Applied</option>
+          </select>
+        </div>
+
+        <!-- Active filter tags -->
+        <div class="active-filters" id="active-filters" role="list" aria-label="Active filters"></div>
+
+        <!-- Jobs grid -->
+        <div id="jobs-grid" role="list" aria-label="Job listings">
+          <!-- Skeletons filled by JS on load -->
+        </div>
+
+        <div id="empty-state" class="hidden">
+          <div class="empty-icon" aria-hidden="true">🔍</div>
+          <h2 class="empty-title serif">No listings found</h2>
+          <p class="empty-sub">Try adjusting your filters or search terms.</p>
+        </div>
+
+        <!-- Infinite scroll sentinel -->
+        <div id="load-more-sentinel" aria-hidden="true">
+          <div class="load-spinner" id="load-spinner"></div>
+        </div>
+
+      </section>
+    </main>
+  </div>
+
+  <!-- ══ MY APPLICATIONS PAGE ═══════════════════════════ -->
+  <div id="applications-page" class="page">
+    <section id="applications-page-content" aria-label="My Applications">
+      <div class="page-header">
+        <h2 class="serif">My Applications</h2>
+        <p>Track all your submitted applications in one place.</p>
+      </div>
+      <div class="apps-grid" id="apps-grid"></div>
+      <div id="apps-empty" class="apps-empty hidden">
+        <div class="empty-icon">📋</div>
+        <p>No applications yet. Start applying to see them here!</p>
+      </div>
+    </section>
+  </div>
+
+  <!-- ══ JOB DETAIL MODAL ═══════════════════════════════ -->
+  <div class="modal-overlay hidden" id="detail-modal" role="dialog" aria-modal="true"
+    aria-labelledby="detail-modal-title">
+    <div class="modal" id="detail-modal-content">
+      <button class="modal-close" id="detail-close" aria-label="Close job details">
+        <svg width="14" height="14" aria-hidden="true">
+          <use href="#ico-x" />
+        </svg>
+      </button>
+      <!-- Filled by JS -->
+    </div>
+  </div>
+
+  <!-- ══ APPLY MODAL ════════════════════════════════════ -->
+  <div class="modal-overlay hidden apply-modal" id="apply-modal" role="dialog" aria-modal="true"
+    aria-labelledby="apply-modal-title">
+    <div class="modal">
+      <button class="modal-close" id="apply-close" aria-label="Close application form">
+        <svg width="14" height="14" aria-hidden="true">
+          <use href="#ico-x" />
+        </svg>
+      </button>
+      <div id="apply-modal-inner">
+        <!-- Step indicator -->
+        <div class="step-indicator" role="progressbar" aria-valuenow="1" aria-valuemin="1" aria-valuemax="2"
+          aria-label="Application step 1 of 2">
+          <div class="step-dot active" id="step-dot-1"><span>1</span></div>
+          <div class="step-line" id="step-line-1"></div>
+          <div class="step-dot" id="step-dot-2"><span>2</span></div>
+          <div style="margin-left:.65rem">
+            <div class="step-label" id="step-label">Step 1 of 2 — Your Details</div>
+          </div>
+        </div>
+
+        <div class="apply-header">
+          <h2 class="serif" id="apply-modal-title">Apply for Position</h2>
+          <p id="apply-job-subtitle" class="text-muted"></p>
+        </div>
+
+        <div class="apply-scroll-body">
+          <div class="apply-body">
+            <form id="apply-form" novalidate>
+
+              <!-- Step 1: Personal Info -->
+              <div class="apply-step active" id="apply-step-1">
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label class="form-label" for="f-name">Full Name <span>*</span></label>
+                    <input class="form-input" id="f-name" type="text" placeholder="Your full name" required
+                      autocomplete="name" />
+                    <span class="field-error hidden" id="err-name">Name is required</span>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="f-email">Email <span>*</span></label>
+                    <input class="form-input" id="f-email" type="email" placeholder="you@college.edu" required
+                      autocomplete="email" />
+                    <span class="field-error hidden" id="err-email">Valid email required</span>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="f-phone">Phone</label>
+                    <input class="form-input" id="f-phone" type="tel" placeholder="+91-XXXXXXXXXX" autocomplete="tel" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="f-graduation">Graduation Year</label>
+                    <input class="form-input" id="f-graduation" type="number" placeholder="2026" min="2024"
+                      max="2030" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="f-institution">Institution</label>
+                    <input class="form-input" id="f-institution" type="text" placeholder="IIT Bombay" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="f-experience">Years of Experience</label>
+                    <input class="form-input" id="f-experience" type="number" placeholder="0" min="0" max="20"
+                      step="0.5" />
+                  </div>
+                </div>
+                <div class="step-nav">
+                  <span style="font-size:.78rem;color:var(--muted)">Fields marked <span
+                      style="color:var(--gold)">*</span> are required</span>
+                  <button type="button" class="btn-next" id="btn-next-1">
+                    Next: Links & Cover Letter
+                    <svg width="15" height="15" aria-hidden="true">
+                      <use href="#ico-arrow-right" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Step 2: Links & Cover Letter -->
+              <div class="apply-step" id="apply-step-2">
+                <div class="form-grid">
+                  <div class="form-group full">
+                    <label class="form-label" for="f-resume">Resume URL <span>*</span></label>
+                    <input class="form-input" id="f-resume" type="url" placeholder="https://drive.google.com/…"
+                      required />
+                    <span class="field-error hidden" id="err-resume">Resume URL required</span>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="f-linkedin">LinkedIn</label>
+                    <input class="form-input" id="f-linkedin" type="url" placeholder="https://linkedin.com/in/…" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="f-portfolio">Portfolio / GitHub</label>
+                    <input class="form-input" id="f-portfolio" type="url" placeholder="https://…" />
+                  </div>
+                  <div class="form-group full">
+                    <label class="form-label" for="f-cover">Cover Letter</label>
+                    <textarea class="form-textarea" id="f-cover"
+                      placeholder="Tell us why you're a great fit…"></textarea>
+                  </div>
+                </div>
+                <div class="step-nav">
+                  <button type="button" class="btn-back" id="btn-back-2">
+                    <svg width="15" height="15" aria-hidden="true">
+                      <use href="#ico-arrow-left" />
+                    </svg>
+                    Back
+                  </button>
+                  <button class="submit-btn" type="submit" id="submit-btn">
+                    <svg width="15" height="15" aria-hidden="true">
+                      <use href="#ico-send" />
+                    </svg>
+                    Submit Application
+                  </button>
+                </div>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ GOOGLE AUTH GATE MODAL ══════════════════════════ -->
+  <div class="modal-overlay hidden auth-gate-modal" id="auth-gate-modal" role="dialog" aria-modal="true"
+    aria-labelledby="auth-gate-title">
+    <div class="modal">
+      <button class="modal-close" id="auth-gate-close" aria-label="Close sign-in dialog">
+        <svg width="14" height="14" aria-hidden="true">
+          <use href="#ico-x" />
+        </svg>
+      </button>
+      <div class="auth-gate-body">
+        <div class="auth-gate-icon" aria-hidden="true" id="auth-gate-icon">🔐</div>
+        <h2 class="auth-gate-title serif" id="auth-gate-title">Sign in to Apply</h2>
+        <p class="auth-gate-sub" id="auth-gate-sub">
+          Sign in with your Google account to apply for this position.<br />
+          Your name and email will be automatically filled in.
+        </p>
+        <!--
+        #gsi-button-container is where google.accounts.id.renderButton() writes
+        the real iframe-based Google button. We render into this div so the
+        actual Google button is always present and clickable — no prompt() needed.
+      -->
+        <div id="gsi-button-container" style="display:flex;justify-content:center;min-height:44px;margin-bottom:.5rem">
+        </div>
+        <p class="auth-gate-skip" id="auth-gate-skip" role="button" tabindex="0" id="auth-gate-skip-text">Apply without
+          signing in</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ BOOKMARKS MODAL ════════════════════════════════ -->
+  <div class="modal-overlay hidden bookmarks-modal" id="bookmarks-modal" role="dialog" aria-modal="true"
+    aria-labelledby="bookmarks-modal-title">
+    <div class="modal">
+      <button class="modal-close" id="bookmarks-close" aria-label="Close bookmarks">
+        <svg width="14" height="14" aria-hidden="true">
+          <use href="#ico-x" />
+        </svg>
+      </button>
+      <div class="bookmarks-header">
+        <h2 class="serif" id="bookmarks-modal-title">
+          <svg width="17" height="17" style="color:var(--blue);vertical-align:middle;margin-right:.35rem"
+            aria-hidden="true">
+            <use href="#ico-bookmark-fill" />
+          </svg>
+          Saved Jobs
+        </h2>
+      </div>
+      <div class="bookmarks-body" id="bookmarks-list"></div>
+    </div>
+  </div>
+
+  <!-- ══ MOBILE BOTTOM APPLY BAR ═══════════════════════ -->
+  <div id="mobile-apply-bar" aria-label="Quick apply bar" role="complementary">
+    <div class="mobile-apply-inner">
+      <div class="mobile-apply-info">
+        <div class="mobile-apply-title" id="mob-apply-title">—</div>
+        <div class="mobile-apply-company" id="mob-apply-company">—</div>
+      </div>
+      <button class="mobile-apply-btn" id="mob-apply-btn" aria-label="Apply now">
+        <svg width="14" height="14" aria-hidden="true">
+          <use href="#ico-send" />
+        </svg>
+        Apply Now
+      </button>
+    </div>
+  </div>
+
+  <!-- ══ TOAST ════════════════════════════════════════ -->
+  <div id="toast-container" aria-live="assertive" aria-atomic="true"></div>
+
+  <!-- ══ FOOTER ═══════════════════════════════════════ -->
+  <footer>
+    <p>© 2025 <strong>CareerNest</strong> — Centralized Opportunity Management Platform</p>
+  </footer>
+
+  <script>
+    'use strict';
+    /* ═══════════════════════════════════════════════════
+       CONFIG & STATE
+    ═══════════════════════════════════════════════════ */
+    const API = (typeof CONFIG !== 'undefined' && CONFIG.API_BASE) ? CONFIG.API_BASE : 'http://localhost:8000';
+    const PAGE_SIZE = 10;
+
+    const state = {
+      jobs: [],
+      total: 0,
+      page: 1,
+      totalPages: 1,
+      hasMore: true,
+      loading: false,
+      loadingMore: false,
+      filters: { search: '', category: '', job_type: '', experience_level: '', location: '', is_remote: null, salary_min: '' },
+      sort: 'newest',
+      bookmarks: JSON.parse(localStorage.getItem('oh_bookmarks') || '[]'),
+      applications: JSON.parse(localStorage.getItem('oh_applications') || '[]'),
+      recentViewed: JSON.parse(localStorage.getItem('oh_recent') || '[]'),
+      currentJobId: null,
+      currentJob: null,
+      applyStep: 1,
+      googleUser: JSON.parse(sessionStorage.getItem('oh_guser') || 'null'),
+      pendingApplyJob: null, // job to open after sign-in
+    };
+
+    /* ═══════════════════════════════════════════════════
+       GOOGLE IDENTITY SERVICES — AUTH
+    ═══════════════════════════════════════════════════ */
+
+    /* ═══════════════════════════════════════════════════
+       GOOGLE IDENTITY SERVICES — AUTH
+       ─────────────────────────────────────────────────
+       We use renderButton() NOT prompt()/One Tap.
+       One Tap is blocked by many browsers and fails
+       silently. renderButton() renders Google's own
+       iframe button which always works via popup.
+    ═══════════════════════════════════════════════════ */
+
+    function parseJwt(token) {
+      try {
+        const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+        return JSON.parse(atob(b64));
+      } catch { return null; }
+    }
+
+    /** Called by Google GIS after sign-in completes */
+    function handleGoogleCredential(response) {
+      const payload = parseJwt(response.credential);
+      if (!payload) { showToast('Sign-in failed — please try again.', 'error'); return; }
+
+      state.googleUser = {
+        name: payload.name,
+        email: payload.email,
+        picture: payload.picture,
+        sub: payload.sub,
+      };
+      sessionStorage.setItem('oh_guser', JSON.stringify(state.googleUser));
+      renderAuthUI();
+      closeAuthGate();
+
+      if (state.pendingApplyJob) {
+        const job = state.pendingApplyJob;
+        state.pendingApplyJob = null;
+        _doOpenApplyModal(job);
+      }
+      updateAppsIndicator();
+      loadStats(); // refresh so Applications stat shows user's own count
+      showToast(`Welcome, ${state.googleUser.name.split(' ')[0]}! 👋`, 'success');
+    }
+
+    /** Render Google's real button into a container element.
+     *  Using renderButton() avoids all One Tap browser restrictions. */
+    function renderGoogleButton(containerEl) {
+      if (!containerEl || typeof google === 'undefined' || !google.accounts) return;
+      const clientId = (typeof CONFIG !== 'undefined') ? CONFIG.GOOGLE_CLIENT_ID : '';
+      if (!clientId || clientId.includes('YOUR_GOOGLE_CLIENT_ID')) return;
+      containerEl.innerHTML = ''; // clear old iframe if any
+      google.accounts.id.renderButton(containerEl, {
+        theme: 'outline', size: 'large', width: 300, text: 'continue_with',
+      });
+    }
+
+    /** Initialize GIS once the script has loaded */
+    function initGoogleAuth() {
+      const clientId = (typeof CONFIG !== 'undefined') ? CONFIG.GOOGLE_CLIENT_ID : '';
+      if (!clientId || clientId.includes('YOUR_GOOGLE_CLIENT_ID')) {
+        console.warn('CareerNest: Set GOOGLE_CLIENT_ID in config.js');
+        return;
+      }
+      google.accounts.id.initialize({
+        client_id: clientId, callback: handleGoogleCredential,
+        auto_select: false, cancel_on_tap_outside: true,
+      });
+      // Pre-render button in gate modal so it's instant when opened
+      renderGoogleButton(document.getElementById('gsi-button-container'));
+    }
+
+    function renderAuthUI() {
+      const user = state.googleUser;
+      const signinBtn = document.getElementById('nav-signin-btn');
+      const profileWrap = document.getElementById('profile-wrapper');
+      const tabApps = document.getElementById('tab-apps');
+
+      if (user) {
+        signinBtn.classList.add('hidden');
+        profileWrap.classList.remove('hidden');
+        if (tabApps) tabApps.classList.remove('hidden');
+
+        const setAvatar = (imgId, phId) => {
+          const img = document.getElementById(imgId);
+          const ph = document.getElementById(phId);
+          if (!img || !ph) return;
+          if (user.picture) {
+            img.src = user.picture; img.style.display = ''; ph.style.display = 'none';
+          } else {
+            ph.textContent = user.name[0]; ph.style.display = ''; img.style.display = 'none';
+          }
+        };
+        setAvatar('profile-avatar-img', 'profile-avatar-placeholder');
+        setAvatar('dd-avatar-img', 'dd-avatar-placeholder');
+        document.getElementById('profile-name-text').textContent = user.name.split(' ')[0];
+        document.getElementById('dd-name').textContent = user.name;
+        document.getElementById('dd-email').textContent = user.email;
+        updateAppsIndicator();
+      } else {
+        signinBtn.classList.remove('hidden');
+        profileWrap.classList.add('hidden');
+        if (tabApps) tabApps.classList.add('hidden');
+        if (document.getElementById('applications-page')?.classList.contains('active')) {
+          showPage('jobs');
+        }
+      }
+    }
+
+    function signOut() {
+      const clientId = (typeof CONFIG !== 'undefined') ? CONFIG.GOOGLE_CLIENT_ID : '';
+      if (clientId && !clientId.includes('YOUR_GOOGLE_CLIENT_ID') && typeof google !== 'undefined') {
+        google.accounts.id.revoke(state.googleUser?.email || '', () => { });
+      }
+      state.googleUser = null;
+      sessionStorage.removeItem('oh_guser');
+      renderAuthUI();
+      closeProfileDropdown();
+      loadStats(); // reset Applications counter to platform total
+      showToast('Signed out', 'info', 2500);
+    }
+
+    function toggleProfileDropdown() {
+      const dd = document.getElementById('profile-dropdown');
+      const btn = document.getElementById('profile-btn');
+      dd.classList.contains('hidden')
+        ? (dd.classList.remove('hidden'), btn.setAttribute('aria-expanded', 'true'))
+        : closeProfileDropdown();
+    }
+    function closeProfileDropdown() {
+      document.getElementById('profile-dropdown').classList.add('hidden');
+      document.getElementById('profile-btn').setAttribute('aria-expanded', 'false');
+    }
+
+    /** Open the auth gate. mode='apply' shows skip; mode='signin' hides it */
+    function openAuthGate(job, mode = 'apply') {
+      state.pendingApplyJob = job || null;
+      const isApply = mode === 'apply';
+      document.getElementById('auth-gate-icon').textContent = isApply ? '🔐' : '👤';
+      document.getElementById('auth-gate-title').textContent = isApply ? 'Sign in to Apply' : 'Sign in to CareerNest';
+      document.getElementById('auth-gate-sub').innerHTML = isApply
+        ? 'Sign in with Google to apply.<br/>Your name and email will be auto-filled.'
+        : 'Sign in to track applications,<br/>save jobs, and apply faster.';
+      const skipEl = document.getElementById('auth-gate-skip');
+      if (skipEl) skipEl.style.display = isApply ? '' : 'none';
+      // Re-render button fresh (clears stale iframe)
+      renderGoogleButton(document.getElementById('gsi-button-container'));
+      document.getElementById('auth-gate-modal').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeAuthGate() {
+      document.getElementById('auth-gate-modal').classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+
+    /* ═══════════════════════════════════════════════════
+       UTILITY — DEBOUNCE
+    ═══════════════════════════════════════════════════ */
+    function debounce(fn, ms) {
+      let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+    }
+
+    /* ═══════════════════════════════════════════════════
+       RIPPLE
+    ═══════════════════════════════════════════════════ */
+    function addRipple(e) {
+      const btn = e.currentTarget;
+      const rect = btn.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height);
+      const x = e.clientX - rect.left - size / 2;
+      const y = e.clientY - rect.top - size / 2;
+      const rip = document.createElement('span');
+      rip.className = 'ripple-wave';
+      rip.style.cssText = `width:${size}px;height:${size}px;left:${x}px;top:${y}px;`;
+      btn.appendChild(rip);
+      rip.addEventListener('animationend', () => rip.remove());
+    }
+    function attachRipples() {
+      document.querySelectorAll('.btn-primary,.btn-secondary,.apply-btn,.submit-btn,.nav-btn.primary,.btn-next,.mobile-apply-btn').forEach(b => {
+        b.removeEventListener('click', addRipple);
+        b.addEventListener('click', addRipple);
+      });
+    }
+
+    /* ═══════════════════════════════════════════════════
+       SCROLL PROGRESS + NAV GLASS
+    ═══════════════════════════════════════════════════ */
+    const scrollBar = document.getElementById('scroll-progress');
+    const nav = document.getElementById('nav');
+    window.addEventListener('scroll', () => {
+      const pct = document.documentElement.scrollHeight - innerHeight;
+      scrollBar.style.width = pct > 0 ? (scrollY / pct * 100) + '%' : '0%';
+      nav.classList.toggle('scrolled', scrollY > 30);
+    }, { passive: true });
+
+    /* ═══════════════════════════════════════════════════
+       TOAST
+    ═══════════════════════════════════════════════════ */
+    function showToast(msg, type = 'info', duration = 4000) {
+      const icons = { success: '✅', error: '❌', info: '✨' };
+      const tc = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      el.className = `toast ${type}`;
+      el.setAttribute('role', 'alert');
+      el.innerHTML = `<span class="toast-icon">${icons[type]}</span><span>${msg}</span><button class="toast-close" aria-label="Dismiss">×</button>`;
+      el.querySelector('.toast-close').onclick = () => el.remove();
+      tc.appendChild(el);
+      setTimeout(() => { el.style.animation = 'fadeIn .3s ease reverse both'; }, duration - 300);
+      setTimeout(() => el.remove(), duration);
+    }
+
+    /* ═══════════════════════════════════════════════════
+       PAGE NAVIGATION
+    ═══════════════════════════════════════════════════ */
+    function showPage(page) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      document.getElementById(page + '-page').classList.add('active');
+
+      // FIX: Safely check for the tab, accounting for the 'tab-apps' ID mismatch
+      const tab = document.getElementById('tab-' + page) || (page === 'applications' ? document.getElementById('tab-apps') : null);
+      if (tab) tab.classList.add('active');
+
+      document.getElementById('hero').style.display = page === 'jobs' ? '' : 'none';
+      if (page === 'applications') renderApplicationsPage();
+    }
+    /* ═══════════════════════════════════════════════════
+       ACCORDION
+    ═══════════════════════════════════════════════════ */
+    document.querySelectorAll('.acc-trigger').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const expanded = btn.getAttribute('aria-expanded') === 'true';
+        const body = document.getElementById(btn.getAttribute('aria-controls'));
+        btn.setAttribute('aria-expanded', !expanded);
+        body.classList.toggle('open', !expanded);
+      });
+    });
+
+    /* ═══════════════════════════════════════════════════
+       SALARY RANGE SLIDER
+    ═══════════════════════════════════════════════════ */
+    const salarySlider = document.getElementById('filter-salary');
+    const salaryVal = document.getElementById('salary-value');
+    salarySlider.addEventListener('input', () => {
+      const v = parseInt(salarySlider.value);
+      const pct = (v / 2000000 * 100).toFixed(1);
+      salarySlider.style.setProperty('--pct', pct + '%');
+      salaryVal.textContent = (v / 1000).toFixed(0);
+    });
+    salarySlider.addEventListener('change', debounce(() => {
+      state.filters.salary_min = salarySlider.value > 0 ? salarySlider.value : '';
+      state.page = 1; state.hasMore = true;
+      resetAndLoad();
+    }, 400));
+
+    /* ═══════════════════════════════════════════════════
+       STATS
+    ═══════════════════════════════════════════════════ */
+    async function loadStats() {
+      try {
+        const data = await apiFetch('/stats');
+        animateCount('stat-jobs', data.overview.active_jobs);
+        animateCount('stat-companies', data.overview.total_companies);
+        animateCount('stat-internships', data.jobs_by_type?.['Internship'] || 0);
+
+        // APPLICATIONS stat: show user's own count if signed in, platform total otherwise
+        if (state.googleUser) {
+          try {
+            const myApps = await apiFetch(`/students/${encodeURIComponent(state.googleUser.email)}/applications`);
+            animateCount('stat-applications', myApps.total || 0);
+            // Update label to clarify
+            const lbl = document.getElementById('stat-apps-label');
+            if (lbl) lbl.textContent = 'MY APPLICATIONS';
+          } catch {
+            animateCount('stat-applications', data.overview.total_applications);
+          }
+        } else {
+          animateCount('stat-applications', data.overview.total_applications);
+          const lbl = document.getElementById('stat-apps-label');
+          if (lbl) lbl.textContent = 'APPLICATIONS';
+        }
+      } catch (e) { /* silent — backend may not be up yet */ }
+    }
+    function animateCount(id, target) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      let cur = 0;
+      const step = Math.ceil(target / 45);
+      const iv = setInterval(() => {
+        cur = Math.min(cur + step, target);
+        el.textContent = cur.toLocaleString('en-IN');
+        if (cur >= target) clearInterval(iv);
+      }, 28);
+    }
+
+    /* ═══════════════════════════════════════════════════
+       API
+    ═══════════════════════════════════════════════════ */
+    async function apiFetch(path, opts = {}) {
+      try {
+        const res = await fetch(API + path, { headers: { 'Content-Type': 'application/json' }, ...opts });
+        if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.detail || `HTTP ${res.status}`); }
+        return res.json();
+      } catch (e) {
+        if (e.message === 'Failed to fetch') throw new Error('Cannot reach backend. Ensure FastAPI is running on port 8000.');
+        throw e;
+      }
+    }
+
+    function buildQuery(page) {
+      const f = state.filters;
+      const p = new URLSearchParams();
+      if (f.search) p.set('search', f.search);
+      if (f.category) p.set('category', f.category);
+      if (f.job_type) p.set('job_type', f.job_type);
+      if (f.experience_level) p.set('experience_level', f.experience_level);
+      if (f.location) p.set('location', f.location);
+      if (f.is_remote === true) p.set('is_remote', 'true');
+      if (f.salary_min) p.set('salary_min', f.salary_min);
+      p.set('sort_by', state.sort);
+      p.set('page', page);
+      p.set('page_size', PAGE_SIZE);
+      return p.toString();
+    }
+
+    /* ═══════════════════════════════════════════════════
+       LOAD JOBS — initial / filter change
+    ═══════════════════════════════════════════════════ */
+    function resetAndLoad() {
+      state.page = 1;
+      state.jobs = [];
+      state.hasMore = true;
+      document.getElementById('jobs-grid').innerHTML = '';
+      loadJobs(true);
+      syncURL();
+    }
+
+    async function loadJobs(initial = false) {
+      if (state.loading) return;
+      state.loading = true;
+      if (initial) showSkeletons();
+
+      try {
+        const data = await apiFetch(`/jobs?${buildQuery(state.page)}`);
+        const newJobs = data.jobs || [];
+        state.total = data.pagination?.total || 0;
+        state.totalPages = data.pagination?.total_pages || 1;
+        state.hasMore = state.page < state.totalPages;
+        state.jobs = initial ? newJobs : [...state.jobs, ...newJobs];
+        renderJobs(newJobs, initial);
+        updateJobsCount();
+        renderActiveTags();
+      } catch (e) {
+        showToast(e.message, 'error');
+        if (initial) {
+          document.getElementById('jobs-grid').innerHTML = '';
+          document.getElementById('empty-state').classList.remove('hidden');
+        }
+      } finally {
+        state.loading = false;
+        document.getElementById('load-spinner').classList.remove('visible');
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════
+       INFINITE SCROLL
+    ═══════════════════════════════════════════════════ */
+    const sentinel = document.getElementById('load-more-sentinel');
+    const loadSpinner = document.getElementById('load-spinner');
+    const scrollObs = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && !state.loading && state.hasMore) {
+        loadSpinner.classList.add('visible');
+        state.page++;
+        loadJobs(false);
+      }
+    }, { rootMargin: '200px' });
+    scrollObs.observe(sentinel);
+
+    /* ═══════════════════════════════════════════════════
+       SKELETONS
+    ═══════════════════════════════════════════════════ */
+    function showSkeletons() {
+      const g = document.getElementById('jobs-grid');
+      g.innerHTML = Array(5).fill(`
+    <div class="skeleton-card" aria-hidden="true">
+      <div class="skeleton sk-1"></div><div class="skeleton sk-2"></div><div class="skeleton sk-3"></div>
+      <div class="sk-tags"><div class="skeleton sk-tag"></div><div class="skeleton sk-tag"></div></div>
+      <div class="sk-meta"><div class="skeleton sk-meta-i"></div><div class="skeleton sk-meta-i"></div></div>
+    </div>`).join('');
+      document.getElementById('empty-state').classList.add('hidden');
+    }
+
+    /* ═══════════════════════════════════════════════════
+       RENDER JOBS
+    ═══════════════════════════════════════════════════ */
+    function renderJobs(newJobs, initial = false) {
+      const g = document.getElementById('jobs-grid');
+      if (initial) g.innerHTML = '';
+
+      if (state.jobs.length === 0) {
+        document.getElementById('empty-state').classList.remove('hidden');
+        return;
+      }
+      document.getElementById('empty-state').classList.add('hidden');
+
+      const frag = document.createDocumentFragment();
+      newJobs.forEach(job => {
+        const div = document.createElement('div');
+        div.innerHTML = jobCardHTML(job);
+        const card = div.firstElementChild;
+        frag.appendChild(card);
+      });
+      g.appendChild(frag);
+
+      // Attach events to new cards
+      g.querySelectorAll('.job-card:not([data-bound])').forEach(card => {
+        card.setAttribute('data-bound', '1');
+        card.addEventListener('click', e => {
+          if (e.target.closest('.bookmark-btn,.card-apply-btn')) return;
+          openJobDetail(card.dataset.jobId);
+        });
+        card.addEventListener('keydown', e => {
+          if (e.key === 'Enter' || e.key === ' ') openJobDetail(card.dataset.jobId);
+        });
+        card.querySelector('.bookmark-btn')?.addEventListener('click', ev => {
+          ev.stopPropagation();
+          const b = ev.currentTarget;
+          toggleBookmark(b.dataset.jobId, b.dataset.jobTitle, b.dataset.companyName);
+        });
+        card.querySelector('.card-apply-btn')?.addEventListener('click', ev => {
+          ev.stopPropagation();
+          const jobId = card.dataset.jobId;
+          const job = state.jobs.find(j => j.id == jobId);
+          if (job) openApplyModal(job);
+        });
+      });
+
+      // Scroll reveal
+      g.querySelectorAll('.job-card:not(.reveal-done)').forEach((card, i) => {
+        card.classList.add('reveal');
+        card.style.transitionDelay = Math.min(i * 0.045, 0.4) + 's';
+        revealObs.observe(card);
+      });
+
+      attachRipples();
+    }
+
+    /* ═══════════════════════════════════════════════════
+       JOB CARD HTML
+    ═══════════════════════════════════════════════════ */
+    function jobCardHTML(job) {
+      const isBookmarked = state.bookmarks.some(b => b.id === job.id);
+      const company = job.company || {};
+      const logo = company.logo_url
+        ? `<img src="${company.logo_url}" alt="${company.name} logo" loading="lazy"/>`
+        : `<span>${(company.name || '?')[0]}</span>`;
+
+      // Salary — prominent, Priority 2
+      const salaryText = job.salary_min
+        ? `₹${(job.salary_min / 1000).toFixed(0)}k${job.salary_max ? ` – ₹${(job.salary_max / 1000).toFixed(0)}k` : '+'}`
+        : null;
+
+      // Posted X days ago
+      const posted = job.created_at ? (() => {
+        const diff = Math.max(0, Math.floor((Date.now() - new Date(job.created_at)) / 86400000));
+        return diff === 0 ? 'Today' : diff === 1 ? '1 day ago' : `${diff} days ago`;
+      })() : null;
+
+      // Deadline
+      const deadline = job.application_deadline ? (() => {
+        const d = new Date(job.application_deadline);
+        const diff = Math.ceil((d - Date.now()) / 86400000);
+        const lbl = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+        return diff <= 7
+          ? `<span class="deadline-badge urgent" aria-label="Closes ${lbl}"><svg width="11" height="11" aria-hidden="true"><use href="#ico-clock"/></svg> ${lbl} — Closes soon!</span>`
+          : `<span class="deadline-badge" aria-label="Deadline ${lbl}"><svg width="11" height="11" aria-hidden="true"><use href="#ico-calendar"/></svg> ${lbl}</span>`;
+      })() : '';
+
+      const viewedClass = state.recentViewed.includes(String(job.id)) ? ' viewed' : '';
+
+      return `
+  <article class="job-card${isBookmarked ? ' bookmarked' : ''}${viewedClass}" role="listitem"
+    data-job-id="${job.id}" tabindex="0"
+    aria-label="${job.title} at ${company.name || 'Unknown'}">
+    <div class="card-top">
+      <div class="card-company-row">
+        <div class="company-logo" aria-hidden="true">${logo}</div>
+        <div class="card-title-group">
+          <!-- Priority 1: Title -->
+          <div class="job-title">${job.title}</div>
+          <!-- Priority 2: Salary -->
+          <div class="salary-prominent${salaryText ? '' : ' undisclosed'}">
+            ${salaryText
+          ? `${salaryText}`
+          : 'Salary not disclosed'}
+          </div>
+          <!-- Priority 3: Company -->
+          <div class="company-name">${company.name || '—'}</div>
+        </div>
+      </div>
+      <div class="card-actions">
+        <button class="bookmark-btn${isBookmarked ? ' active' : ''}"
+          data-job-id="${job.id}"
+          data-job-title="${job.title}"
+          data-company-name="${company.name || ''}"
+          aria-label="${isBookmarked ? 'Remove bookmark' : 'Bookmark'} ${job.title}"
+          aria-pressed="${isBookmarked}">
+          <svg width="14" height="14" aria-hidden="true"><use href="#ico-${isBookmarked ? 'bookmark-fill' : 'bookmark'}"/></svg>
+        </button>
+        <button class="card-apply-btn" aria-label="Quick apply to ${job.title}">
+          Apply Now
+          <svg width="11" height="11" aria-hidden="true"><use href="#ico-arrow-right"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="card-tags">
+      ${job.job_type ? `<span class="tag tag-type">${job.job_type}</span>` : ''}
+      ${job.is_remote ? `<span class="tag tag-remote"><svg width="10" height="10" aria-hidden="true"><use href="#ico-wifi"/></svg> Remote</span>` : ''}
+      ${job.category ? `<span class="tag tag-cat">${job.category}</span>` : ''}
+      ${job.experience_level ? `<span class="tag tag-exp">${job.experience_level}</span>` : ''}
+    </div>
+
+    <div class="card-meta">
+      ${job.location ? `<span class="meta-item"><svg width="12" height="12" aria-hidden="true"><use href="#ico-map"/></svg>${job.location}</span>` : ''}
+      ${job.openings ? `<span class="meta-item"><svg width="12" height="12" aria-hidden="true"><use href="#ico-users"/></svg>${job.openings} opening${job.openings !== 1 ? 's' : ''}</span>` : ''}
+    </div>
+
+    <div class="card-footer">
+      ${posted ? `<span class="posted-ago"><svg width="11" height="11" aria-hidden="true"><use href="#ico-clock"/></svg>${posted}</span>` : '<span></span>'}
+      <div style="display:flex;align-items:center;gap:.65rem">
+        ${job.openings ? `<span class="openings-badge">${job.openings} open</span>` : ''}
+        ${deadline}
+      </div>
+    </div>
+  </article>`;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       JOB DETAIL MODAL
+    ═══════════════════════════════════════════════════ */
+    async function openJobDetail(jobId) {
+      state.currentJobId = jobId;
+      const cached = state.jobs.find(j => String(j.id) === String(jobId));
+
+      // Track recently viewed
+      trackRecentView(String(jobId), cached?.title, cached?.company?.name);
+
+      const overlay = document.getElementById('detail-modal');
+      const content = document.getElementById('detail-modal-content');
+
+      // Show spinner while loading
+      content.innerHTML = `
+    <div style="padding:4rem;text-align:center">
+      <div style="width:28px;height:28px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto"></div>
+    </div>`;
+      overlay.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      attachRipples();
+
+      try {
+        let job = cached;
+        if (!job) { job = await apiFetch(`/jobs/${jobId}`); }
+        state.currentJob = job;
+        content.innerHTML = buildDetailHTML(job);
+        document.getElementById('detail-close').addEventListener('click', closeDetailModal);
+
+        // Anchor nav
+        content.querySelectorAll('.anchor-link').forEach(link => {
+          link.addEventListener('click', e => {
+            e.preventDefault();
+            const target = content.querySelector(link.getAttribute('href'));
+            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          });
+        });
+
+        // Floating apply
+        content.querySelector('.apply-btn')?.addEventListener('click', () => {
+          closeDetailModal();
+          openApplyModal(job);
+        });
+
+        // Mobile bottom bar
+        showMobileApplyBar(job);
+
+        attachRipples();
+      } catch (e) {
+        showToast(e.message, 'error');
+        closeDetailModal();
+      }
+    }
+
+    function buildDetailHTML(job) {
+      const company = job.company || {};
+      const logo = company.logo_url
+        ? `<img src="${company.logo_url}" alt="${company.name}" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:10px"/>`
+        : `<span>${(company.name || '?')[0]}</span>`;
+      const salary = job.salary_min
+        ? `₹${(job.salary_min / 1000).toFixed(0)}k${job.salary_max ? ` – ₹${(job.salary_max / 1000).toFixed(0)}k` : '+'}`
+        : 'Not disclosed';
+      const deadline = job.application_deadline
+        ? new Date(job.application_deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+        : 'Rolling';
+      const posted = job.created_at
+        ? new Date(job.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+        : '—';
+
+      return `
+    <button class="modal-close" id="detail-close" aria-label="Close job details">
+      <svg width="14" height="14" aria-hidden="true"><use href="#ico-x"/></svg>
+    </button>
+
+    <!-- Sticky header -->
+    <div class="detail-header">
+      <!-- Anchor nav -->
+      <nav class="detail-anchor-nav" aria-label="Jump to section">
+        <a class="anchor-link active" href="#sec-overview">Overview</a>
+        <a class="anchor-link" href="#sec-desc">Description</a>
+        <a class="anchor-link" href="#sec-reqs">Requirements</a>
+        <a class="anchor-link" href="#sec-skills">Skills</a>
+      </nav>
+
+      <div class="detail-company-row">
+        <div class="detail-logo">${logo}</div>
+        <div>
+          <div class="detail-company-name">${company.name || '—'}</div>
+          ${company.website ? `<a class="detail-company-website" href="${company.website}" target="_blank" rel="noopener">
+            <svg width="11" height="11" aria-hidden="true"><use href="#ico-link"/></svg>${company.website}
+          </a>` : ''}
+        </div>
+      </div>
+
+      <h2 class="detail-title serif" id="detail-modal-title">${job.title}</h2>
+
+      <div class="detail-tags">
+        ${job.job_type ? `<span class="tag tag-type">${job.job_type}</span>` : ''}
+        ${job.is_remote ? `<span class="tag tag-remote"><svg width="10" height="10" aria-hidden="true"><use href="#ico-wifi"/></svg>Remote</span>` : ''}
+        ${job.category ? `<span class="tag tag-cat">${job.category}</span>` : ''}
+        ${job.experience_level ? `<span class="tag tag-exp">${job.experience_level}</span>` : ''}
+      </div>
+
+      <div class="detail-meta-grid" id="sec-overview">
+        <div class="detail-meta-item">
+          <span class="detail-meta-label">Salary</span>
+          <span class="detail-meta-value salary">${salary}</span>
+        </div>
+        ${job.location ? `<div class="detail-meta-item"><span class="detail-meta-label">Location</span><span class="detail-meta-value">${job.location}</span></div>` : ''}
+        ${job.openings ? `<div class="detail-meta-item"><span class="detail-meta-label">Openings</span><span class="detail-meta-value">${job.openings}</span></div>` : ''}
+        <div class="detail-meta-item"><span class="detail-meta-label">Deadline</span><span class="detail-meta-value">${deadline}</span></div>
+        <div class="detail-meta-item"><span class="detail-meta-label">Posted</span><span class="detail-meta-value">${posted}</span></div>
+        ${job.applications_count != null ? `<div class="detail-meta-item"><span class="detail-meta-label">Applicants</span><span class="detail-meta-value">${job.applications_count}</span></div>` : ''}
+      </div>
+    </div>
+
+    <!-- Scrollable body -->
+    <div class="detail-scroll-body">
+      <div class="detail-body">
+        ${job.description ? `
+        <div class="detail-section" id="sec-desc">
+          <div class="detail-section-title"><svg width="12" height="12" aria-hidden="true"><use href="#ico-briefcase"/></svg> Description</div>
+          <p class="detail-desc">${job.description}</p>
+        </div>` : ''}
+
+        ${job.requirements?.length ? `
+        <div class="detail-section" id="sec-reqs">
+          <div class="detail-section-title"><svg width="12" height="12" aria-hidden="true"><use href="#ico-check"/></svg> Requirements</div>
+          <ul class="detail-list">${job.requirements.map(r => `<li>${r}</li>`).join('')}</ul>
+        </div>` : ''}
+
+        ${job.responsibilities?.length ? `
+        <div class="detail-section">
+          <div class="detail-section-title"><svg width="12" height="12" aria-hidden="true"><use href="#ico-star"/></svg> Responsibilities</div>
+          <ul class="detail-list">${job.responsibilities.map(r => `<li>${r}</li>`).join('')}</ul>
+        </div>` : ''}
+
+        ${job.skills?.length ? `
+        <div class="detail-section" id="sec-skills">
+          <div class="detail-section-title"><svg width="12" height="12" aria-hidden="true"><use href="#ico-zap"/></svg> Skills</div>
+          <div class="detail-skill-tags">${job.skills.map(s => `<span class="skill-tag">${s}</span>`).join('')}</div>
+        </div>` : ''}
+
+        ${job.benefits?.length ? `
+        <div class="detail-section">
+          <div class="detail-section-title"><svg width="12" height="12" aria-hidden="true"><use href="#ico-shield"/></svg> Benefits</div>
+          <ul class="detail-list">${job.benefits.map(b => `<li>${b}</li>`).join('')}</ul>
+        </div>` : ''}
+      </div>
+    </div>
+
+    <!-- Sticky floating footer -->
+    <div class="detail-footer">
+      <div class="detail-footer-info">
+        <strong>${job.applications_count || 0}</strong> applications • Deadline: <strong>${deadline}</strong>
+      </div>
+      <button class="apply-btn" aria-label="Apply for ${job.title}">
+        <svg width="15" height="15" aria-hidden="true"><use href="#ico-send"/></svg>
+        Apply Now
+      </button>
+    </div>`;
+    }
+
+    function closeDetailModal() {
+      document.getElementById('detail-modal').classList.add('hidden');
+      document.body.style.overflow = '';
+      hideMobileApplyBar();
+    }
+
+    /* ═══════════════════════════════════════════════════
+       APPLY MODAL — 2-STEP (with Google Auth gate)
+    ═══════════════════════════════════════════════════ */
+    function openApplyModal(job) {
+      // If user is not signed in, show auth gate first
+      if (!state.googleUser) {
+        openAuthGate(job);
+        return;
+      }
+      _doOpenApplyModal(job);
+    }
+
+    function _doOpenApplyModal(job) {
+      state.currentJob = job;
+      state.applyStep = 1;
+      document.getElementById('apply-job-subtitle').textContent = `${job.title} @ ${job.company?.name || '—'}`;
+      document.getElementById('apply-modal-title').textContent = 'Apply for Position';
+
+      // Reset steps
+      goToStep(1);
+      document.getElementById('apply-form').reset();
+      document.querySelectorAll('.field-error').forEach(e => e.classList.add('hidden'));
+      document.querySelectorAll('.form-input,.form-textarea').forEach(el => el.classList.remove('error'));
+
+      // Auto-fill from Google profile
+      if (state.googleUser) {
+        const nameEl = document.getElementById('f-name');
+        const emailEl = document.getElementById('f-email');
+        if (nameEl && !nameEl.value) nameEl.value = state.googleUser.name;
+        if (emailEl && !emailEl.value) emailEl.value = state.googleUser.email;
+        // Make email read-only to prevent mismatch
+        if (emailEl) { emailEl.readOnly = true; emailEl.style.opacity = '.8'; emailEl.title = 'Filled from your Google account'; }
+      }
+
+      // Restore success state if any
+      const inner = document.getElementById('apply-modal-inner');
+      if (!inner.querySelector('.step-indicator')) {
+        location.reload();
+        return;
+      }
+
+      document.getElementById('apply-modal').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      attachRipples();
+    }
+
+    function goToStep(step) {
+      state.applyStep = step;
+      document.querySelectorAll('.apply-step').forEach(s => s.classList.remove('active'));
+      document.getElementById(`apply-step-${step}`).classList.add('active');
+
+      // Update step indicator
+      const d1 = document.getElementById('step-dot-1');
+      const d2 = document.getElementById('step-dot-2');
+      const l1 = document.getElementById('step-line-1');
+      const lbl = document.getElementById('step-label');
+
+      if (step === 1) {
+        d1.className = 'step-dot active'; d1.innerHTML = '<span>1</span>';
+        d2.className = 'step-dot'; d2.innerHTML = '<span>2</span>';
+        l1.classList.remove('done');
+        lbl.textContent = 'Step 1 of 2 — Your Details';
+      } else {
+        d1.className = 'step-dot done'; d1.innerHTML = '';
+        d2.className = 'step-dot active'; d2.innerHTML = '<span>2</span>';
+        l1.classList.add('done');
+        lbl.textContent = 'Step 2 of 2 — Links & Cover Letter';
+      }
+    }
+
+    function closeApplyModal() {
+      document.getElementById('apply-modal').classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+
+    // Step navigation
+    document.getElementById('btn-next-1').addEventListener('click', () => {
+      const name = document.getElementById('f-name');
+      const email = document.getElementById('f-email');
+      let ok = true;
+      if (!name.value.trim()) {
+        name.classList.add('error');
+        document.getElementById('err-name').classList.remove('hidden'); ok = false;
+      } else {
+        name.classList.remove('error');
+        document.getElementById('err-name').classList.add('hidden');
+      }
+      if (!email.value.trim() || !email.validity.valid) {
+        email.classList.add('error');
+        document.getElementById('err-email').classList.remove('hidden'); ok = false;
+      } else {
+        email.classList.remove('error');
+        document.getElementById('err-email').classList.add('hidden');
+      }
+      if (ok) goToStep(2);
+    });
+
+    document.getElementById('btn-back-2').addEventListener('click', () => goToStep(1));
+
+    document.getElementById('apply-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const resume = document.getElementById('f-resume');
+      if (!resume.value.trim()) {
+        resume.classList.add('error');
+        document.getElementById('err-resume').classList.remove('hidden');
+        return;
+      }
+      resume.classList.remove('error');
+      document.getElementById('err-resume').classList.add('hidden');
+
+      const btn = document.getElementById('submit-btn');
+      btn.disabled = true;
+      btn.innerHTML = `<span class="spinner"></span> Submitting…`;
+
+      try {
+        const payload = {
+          job_id: state.currentJob?.id,
+          full_name: document.getElementById('f-name').value,
+          email: document.getElementById('f-email').value,
+          phone: document.getElementById('f-phone').value,
+          graduation_year: document.getElementById('f-graduation').value || null,
+          institution: document.getElementById('f-institution').value,
+          years_experience: document.getElementById('f-experience').value || null,
+          resume_url: resume.value,
+          linkedin_url: document.getElementById('f-linkedin').value,
+          portfolio_url: document.getElementById('f-portfolio').value,
+          cover_letter: document.getElementById('f-cover').value,
+        };
+        await apiFetch('/applications', { method: 'POST', body: JSON.stringify(payload) });
+
+        /*
+        // Save application locally
+        const app = {
+          id:        Date.now(),
+          jobId:     state.currentJob?.id,
+          title:     state.currentJob?.title,
+          company:   state.currentJob?.company?.name,
+          logo:      state.currentJob?.company?.logo_url,
+          date:      new Date().toISOString(),
+          status:    'pending',
+        };
+        state.applications.push(app);
+        localStorage.setItem('oh_applications', JSON.stringify(state.applications));
+        */
+        updateAppsIndicator();
+        loadStats(); // update "My Applications" counter in hero stats
+
+        // Show success
+        document.getElementById('apply-modal-inner').innerHTML = `
+      <div class="success-state">
+        <div class="success-icon" aria-label="Success">🎉</div>
+        <h2 class="success-title serif">Application Submitted!</h2>
+        <p class="success-sub">Your application for <strong>${state.currentJob?.title}</strong> has been sent. Good luck! Track it under <em>My Apps</em>.</p>
+        <button class="btn-primary" style="margin-top:1.5rem;margin:1.5rem auto 0;display:flex" onclick="closeApplyModal()">Done</button>
+      </div>`;
+        attachRipples();
+        showToast(`Applied to ${state.currentJob?.title}! 🎉`, 'success');
+      } catch (err) {
+        showToast(err.message, 'error');
+        btn.disabled = false;
+        btn.innerHTML = `<svg width="15" height="15" aria-hidden="true"><use href="#ico-send"/></svg> Submit Application`;
+      }
+    });
+
+    /* ═══════════════════════════════════════════════════
+       MY APPLICATIONS PAGE (Live from Backend)
+    ═══════════════════════════════════════════════════ */
+    const STATUS_CONFIG = {
+      'pending': { label: 'Under Review', cls: 'pending' },
+      'reviewing': { label: 'Being Reviewed', cls: 'reviewing' },
+      'shortlisted': { label: 'Shortlisted', cls: 'interview' },
+      'accepted': { label: 'Offer Received', cls: 'offered' },
+      'rejected': { label: 'Not Selected', cls: 'rejected' },
+    };
+
+    async function renderApplicationsPage() {
+      const grid = document.getElementById('apps-grid');
+      const empty = document.getElementById('apps-empty');
+
+      if (!state.googleUser) {
+        grid.innerHTML = '';
+        empty.innerHTML = `<div class="empty-icon">🔐</div><p>Please sign in to view your applications.</p>`;
+        empty.classList.remove('hidden');
+        return;
+      }
+
+      // Show a loading message while we fetch
+      grid.innerHTML = '<div style="text-align:center; padding:3rem; color:var(--muted);">Fetching your applications...</div>';
+      empty.classList.add('hidden');
+
+      try {
+        const res = await apiFetch(`/students/${encodeURIComponent(state.googleUser.email)}/applications`);
+        const apps = res.applications || [];
+
+        if (!apps.length) {
+          grid.innerHTML = '';
+          empty.innerHTML = `<div class="empty-icon">📋</div><p>No applications yet. Start applying to see them here!</p>`;
+          empty.classList.remove('hidden');
+          return;
+        }
+
+        // Map backend data to HTML cards
+        grid.innerHTML = apps.slice().reverse().map((app, i) => {
+          // Ensure backend status strings map cleanly
+          const statusKey = app.status ? app.status.toLowerCase() : 'pending';
+          const sc = STATUS_CONFIG[statusKey] || STATUS_CONFIG.pending;
+
+          const letter = (app.company_name && app.company_name.length > 0) ? app.company_name[0].toUpperCase() : '?';
+          const logo = `<span>${letter}</span>`;
+          const date = new Date(app.applied_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+
+          return `
+      <div class="app-card reveal" style="animation-delay:${i * 0.06}s">
+        <div class="app-logo">${logo}</div>
+        <div class="app-info">
+          <div class="app-title">${app.job_title}</div>
+          <div class="app-company">${app.company_name || '—'}</div>
+          <div class="app-date">
+            <svg width="11" height="11" aria-hidden="true" style="margin-right:4px;"><use href="#ico-calendar"/></svg>
+            Applied ${date}
+          </div>
+        </div>
+        <span class="status-badge ${sc.cls}" aria-label="Status: ${sc.label}">
+          <span class="status-dot" aria-hidden="true"></span>${sc.label}
+        </span>
+      </div>`;
+        }).join('');
+
+        grid.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
+
+      } catch (e) {
+        grid.innerHTML = '';
+        empty.innerHTML = `<div class="empty-icon">⚠️</div><p style="color:var(--red);">Failed to load applications. Ensure backend is running.</p>`;
+        empty.classList.remove('hidden');
+        console.error("Failed to load apps:", e);
+      }
+    }
+
+    async function updateAppsIndicator() {
+      const dot = document.getElementById('apps-dot');
+      if (!state.googleUser) {
+        dot.style.display = 'none';
+        return;
+      }
+      try {
+        const res = await apiFetch(`/students/${encodeURIComponent(state.googleUser.email)}/applications`);
+        dot.style.display = (res.applications && res.applications.length > 0) ? '' : 'none';
+      } catch (e) {
+        dot.style.display = 'none';
+      }
+    }
+    /* ═══════════════════════════════════════════════════
+       BOOKMARKS
+    ═══════════════════════════════════════════════════ */
+    function toggleBookmark(id, title, company) {
+      const idx = state.bookmarks.findIndex(b => b.id == id);
+      if (idx > -1) {
+        state.bookmarks.splice(idx, 1);
+        showToast('Bookmark removed', 'info', 2000);
+      } else {
+        state.bookmarks.push({ id, title, company });
+        showToast(`Bookmarked: ${title}`, 'success', 2000);
+      }
+      localStorage.setItem('oh_bookmarks', JSON.stringify(state.bookmarks));
+      updateBookmarkCount();
+
+      // Update card UI
+      document.querySelectorAll(`.bookmark-btn[data-job-id="${id}"]`).forEach(btn => {
+        const active = state.bookmarks.some(b => b.id == id);
+        btn.classList.toggle('active', active);
+        btn.setAttribute('aria-pressed', active);
+        btn.querySelector('use').setAttribute('href', active ? '#ico-bookmark-fill' : '#ico-bookmark');
+        btn.closest('.job-card')?.classList.toggle('bookmarked', active);
+      });
+    }
+
+    function updateBookmarkCount() {
+      document.getElementById('bookmark-count').textContent = state.bookmarks.length;
+    }
+
+    function openBookmarksModal() {
+      const list = document.getElementById('bookmarks-list');
+      if (!state.bookmarks.length) {
+        list.innerHTML = `<div style="text-align:center;padding:3rem 1rem;color:var(--muted)">No saved jobs yet. Bookmark some listings!</div>`;
+      } else {
+        list.innerHTML = state.bookmarks.map(b => `
+      <div class="bookmark-item" role="button" tabindex="0"
+        onclick="closeBookmarksModal();openJobDetail('${b.id}')"
+        onkeydown="if(event.key==='Enter')this.click()"
+        aria-label="View ${b.title}">
+        <div class="bookmark-item-left">
+          <div class="bookmark-item-title">${b.title}</div>
+          <div class="bookmark-item-company">${b.company}</div>
+        </div>
+        <button class="bookmark-remove" aria-label="Remove bookmark"
+          onclick="event.stopPropagation();toggleBookmark('${b.id}','${b.title}','${b.company}');openBookmarksModal()">
+          <svg width="14" height="14" aria-hidden="true"><use href="#ico-trash"/></svg>
+        </button>
+      </div>`).join('');
+      }
+      document.getElementById('bookmarks-modal').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeBookmarksModal() {
+      document.getElementById('bookmarks-modal').classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+
+    /* ═══════════════════════════════════════════════════
+       RECENTLY VIEWED
+    ═══════════════════════════════════════════════════ */
+    function trackRecentView(id, title, company) {
+      if (!title) return;
+      const key = String(id);
+      state.recentViewed = state.recentViewed.filter(r => r.id !== key);
+      state.recentViewed.unshift({ id: key, title, company });
+      state.recentViewed = state.recentViewed.slice(0, 5);
+      localStorage.setItem('oh_recent', JSON.stringify(state.recentViewed));
+      renderRecentlyViewed();
+    }
+    function renderRecentlyViewed() {
+      const sec = document.getElementById('recently-viewed-section');
+      const chips = document.getElementById('rv-chips');
+      const items = state.recentViewed;
+      if (!items.length) { sec.style.display = 'none'; return; }
+      sec.style.display = '';
+      chips.innerHTML = items.map(r => `
+    <button class="rv-chip" onclick="openJobDetail('${r.id}')" aria-label="Revisit ${r.title}">
+      ${r.title}
+      <span class="rv-chip-close" aria-hidden="true">×</span>
+    </button>`).join('');
+    }
+
+    /* ═══════════════════════════════════════════════════
+       MOBILE APPLY BAR
+    ═══════════════════════════════════════════════════ */
+    function showMobileApplyBar(job) {
+      const bar = document.getElementById('mobile-apply-bar');
+      document.getElementById('mob-apply-title').textContent = job.title;
+      document.getElementById('mob-apply-company').textContent = job.company?.name || '';
+      document.getElementById('mob-apply-btn').onclick = () => { closeDetailModal(); openApplyModal(job); };
+      bar.classList.add('visible');
+    }
+    function hideMobileApplyBar() {
+      document.getElementById('mobile-apply-bar').classList.remove('visible');
+    }
+
+    /* ═══════════════════════════════════════════════════
+       FILTER UI
+    ═══════════════════════════════════════════════════ */
+    function updateJobsCount() {
+      document.getElementById('jobs-count').innerHTML =
+        `<strong>${state.total.toLocaleString('en-IN')}</strong> listing${state.total !== 1 ? 's' : ''} found`;
+    }
+
+    function renderActiveTags() {
+      const f = state.filters;
+      const container = document.getElementById('active-filters');
+      const tags = [];
+      if (f.search) tags.push({ label: `"${f.search}"`, key: 'search' });
+      if (f.category) tags.push({ label: f.category, key: 'category' });
+      if (f.job_type) tags.push({ label: f.job_type, key: 'job_type' });
+      if (f.experience_level) tags.push({ label: f.experience_level, key: 'experience_level' });
+      if (f.location) tags.push({ label: `📍 ${f.location}`, key: 'location' });
+      if (f.is_remote) tags.push({ label: 'Remote Only', key: 'is_remote' });
+      if (f.salary_min) tags.push({ label: `Min ₹${(parseInt(f.salary_min) / 1000).toFixed(0)}k`, key: 'salary_min' });
+
+      container.innerHTML = tags.map(t => `
+    <span class="filter-tag" role="listitem">
+      ${t.label}
+      <button onclick="clearTag('${t.key}')" aria-label="Remove ${t.label} filter">×</button>
+    </span>`).join('');
+
+      // Active count badge
+      const count = tags.length;
+      const badge = document.getElementById('active-filter-badge');
+      const mobBadge = document.getElementById('mobile-filter-count');
+      if (count > 0) {
+        badge.textContent = count; badge.style.display = '';
+        mobBadge.textContent = count; mobBadge.style.display = '';
+        badge.classList.add('bump'); setTimeout(() => badge.classList.remove('bump'), 400);
+      } else {
+        badge.style.display = 'none';
+        mobBadge.style.display = 'none';
+      }
+    }
+
+    function clearTag(key) {
+      state.filters[key] = key === 'is_remote' ? null : '';
+      if (key === 'search') { document.getElementById('nav-search-input').value = ''; }
+      if (key === 'category') { document.getElementById('filter-category').value = ''; }
+      if (key === 'job_type') { document.getElementById('filter-type').value = ''; }
+      if (key === 'experience_level') { document.getElementById('filter-exp').value = ''; }
+      if (key === 'location') { document.getElementById('filter-location').value = ''; }
+      if (key === 'is_remote') { document.getElementById('filter-remote').checked = false; }
+      if (key === 'salary_min') {
+        const s = document.getElementById('filter-salary');
+        s.value = 0; s.style.setProperty('--pct', '0%');
+        document.getElementById('salary-value').textContent = '0';
+      }
+      state.page = 1; state.hasMore = true;
+      resetAndLoad();
+    }
+
+    /* ═══════════════════════════════════════════════════
+       URL SYNC
+    ═══════════════════════════════════════════════════ */
+    function syncURL() {
+      const f = state.filters;
+      const params = new URLSearchParams();
+      if (f.search) params.set('q', f.search);
+      if (f.category) params.set('cat', f.category);
+      if (f.job_type) params.set('type', f.job_type);
+      if (f.experience_level) params.set('exp', f.experience_level);
+      if (f.location) params.set('loc', f.location);
+      if (f.is_remote) params.set('remote', '1');
+      if (f.salary_min) params.set('sal', f.salary_min);
+      if (state.sort !== 'newest') params.set('sort', state.sort);
+      const str = params.toString();
+      window.history.replaceState({}, '', str ? `?${str}` : location.pathname);
+    }
+
+    function loadFromURL() {
+      const p = new URLSearchParams(location.search);
+      const set = (key, val) => { if (val) state.filters[key] = val; };
+      set('search', p.get('q'));
+      set('category', p.get('cat'));
+      set('job_type', p.get('type'));
+      set('experience_level', p.get('exp'));
+      set('location', p.get('loc'));
+      if (p.get('remote') === '1') state.filters.is_remote = true;
+      if (p.get('sal')) state.filters.salary_min = p.get('sal');
+      if (p.get('sort')) state.sort = p.get('sort');
+
+      // Sync controls
+      if (state.filters.search) document.getElementById('nav-search-input').value = state.filters.search;
+      if (state.filters.category) document.getElementById('filter-category').value = state.filters.category;
+      if (state.filters.job_type) document.getElementById('filter-type').value = state.filters.job_type;
+      if (state.filters.experience_level) document.getElementById('filter-exp').value = state.filters.experience_level;
+      if (state.filters.location) document.getElementById('filter-location').value = state.filters.location;
+      if (state.filters.is_remote) document.getElementById('filter-remote').checked = true;
+      if (state.filters.salary_min) {
+        const s = document.getElementById('filter-salary');
+        s.value = state.filters.salary_min;
+        const pct = (parseInt(s.value) / 2000000 * 100).toFixed(1);
+        s.style.setProperty('--pct', pct + '%');
+        document.getElementById('salary-value').textContent = (parseInt(s.value) / 1000).toFixed(0);
+      }
+      if (state.sort) document.getElementById('sort-select').value = state.sort;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       SCROLL REVEAL OBSERVER
+    ═══════════════════════════════════════════════════ */
+    const revealObs = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('revealed');
+          entry.target.classList.add('reveal-done');
+          revealObs.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.08, rootMargin: '0px 0px -30px 0px' });
+
+    // Observe static elements
+    document.querySelectorAll('.filter-group,.sidebar-header-bar,.hero-ctas,.trust-badges,.hero-stats').forEach(el => {
+      el.classList.add('reveal');
+      revealObs.observe(el);
+    });
+
+    /* ═══════════════════════════════════════════════════
+       EVENT WIRING
+    ═══════════════════════════════════════════════════ */
+    const debouncedSearch = debounce(val => {
+      state.filters.search = val;
+      state.page = 1; state.hasMore = true;
+      resetAndLoad();
+    }, 360);
+    document.getElementById('nav-search-input').addEventListener('input', e => debouncedSearch(e.target.value.trim()));
+
+    ['filter-category', 'filter-type', 'filter-exp'].forEach(id => {
+      document.getElementById(id)?.addEventListener('change', e => {
+        const map = { 'filter-category': 'category', 'filter-type': 'job_type', 'filter-exp': 'experience_level' };
+        state.filters[map[id]] = e.target.value;
+        state.page = 1; state.hasMore = true; resetAndLoad();
+      });
+    });
+
+    const debouncedLocation = debounce(val => {
+      state.filters.location = val;
+      state.page = 1; state.hasMore = true; resetAndLoad();
+    }, 480);
+    document.getElementById('filter-location')?.addEventListener('input', e => debouncedLocation(e.target.value.trim()));
+
+    document.getElementById('filter-remote').addEventListener('change', e => {
+      state.filters.is_remote = e.target.checked ? true : null;
+      state.page = 1; state.hasMore = true; resetAndLoad();
+    });
+
+    document.getElementById('sort-select').addEventListener('change', e => {
+      state.sort = e.target.value;
+      state.page = 1; state.hasMore = true; resetAndLoad();
+    });
+
+    document.getElementById('clear-filters-btn').addEventListener('click', () => {
+      state.filters = { search: '', category: '', job_type: '', experience_level: '', location: '', is_remote: null, salary_min: '' };
+      document.getElementById('nav-search-input').value = '';
+      document.getElementById('filter-category').value = '';
+      document.getElementById('filter-type').value = '';
+      document.getElementById('filter-exp').value = '';
+      document.getElementById('filter-location').value = '';
+      document.getElementById('filter-remote').checked = false;
+      const s = document.getElementById('filter-salary');
+      s.value = 0; s.style.setProperty('--pct', '0%');
+      document.getElementById('salary-value').textContent = '0';
+      state.page = 1; state.hasMore = true; resetAndLoad();
+    });
+
+    // Mobile sidebar
+    const sidebar = document.getElementById('sidebar');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    function openSidebar() {
+      sidebar.classList.add('open');
+      backdrop.classList.add('visible');
+      document.getElementById('mobile-filter-btn').setAttribute('aria-expanded', 'true');
+    }
+    function closeSidebar() {
+      sidebar.classList.remove('open');
+      backdrop.classList.remove('visible');
+      document.getElementById('mobile-filter-btn').setAttribute('aria-expanded', 'false');
+    }
+    document.getElementById('mobile-filter-btn').addEventListener('click', openSidebar);
+    document.getElementById('sidebar-close-btn').addEventListener('click', closeSidebar);
+    backdrop.addEventListener('click', closeSidebar);
+
+    // Modal close
+    document.getElementById('bookmarks-btn').addEventListener('click', openBookmarksModal);
+    document.getElementById('bookmarks-close').addEventListener('click', closeBookmarksModal);
+    document.getElementById('apply-close').addEventListener('click', closeApplyModal);
+
+    document.getElementById('detail-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeDetailModal(); });
+    document.getElementById('apply-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeApplyModal(); });
+    document.getElementById('bookmarks-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeBookmarksModal(); });
+
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Escape') return;
+      if (!document.getElementById('detail-modal').classList.contains('hidden')) closeDetailModal();
+      if (!document.getElementById('apply-modal').classList.contains('hidden')) closeApplyModal();
+      if (!document.getElementById('bookmarks-modal').classList.contains('hidden')) closeBookmarksModal();
+      if (sidebar.classList.contains('open')) closeSidebar();
+    });
+
+    /* ═══════════════════════════════════════════════════
+       INIT
+    ═══════════════════════════════════════════════════ */
+    loadFromURL();
+    updateBookmarkCount();
+    updateAppsIndicator();
+    renderRecentlyViewed();
+    loadStats();
+    resetAndLoad();
+    attachRipples();
+
+    // ── Google Auth wiring ────────────────────────────
+    renderAuthUI(); // restore session if any
+
+    // Nav Sign-In button → open auth gate in 'signin' mode
+    // (uses renderButton() inside the gate — NO One Tap / prompt())
+    document.getElementById('nav-signin-btn').addEventListener('click', () => {
+      const clientId = (typeof CONFIG !== 'undefined') ? CONFIG.GOOGLE_CLIENT_ID : '';
+      if (!clientId || clientId.includes('YOUR_GOOGLE_CLIENT_ID')) {
+        showToast('Google Sign-In not configured. Set GOOGLE_CLIENT_ID in config.js', 'error', 5000);
+        return;
+      }
+      openAuthGate(null, 'signin');
+    });
+
+    document.getElementById('profile-btn').addEventListener('click', toggleProfileDropdown);
+    document.getElementById('signout-btn').addEventListener('click', signOut);
+
+    // Auth gate events
+    document.getElementById('auth-gate-close').addEventListener('click', closeAuthGate);
+    document.getElementById('auth-gate-skip').addEventListener('click', () => {
+      closeAuthGate();
+      if (state.pendingApplyJob) {
+        const job = state.pendingApplyJob;
+        state.pendingApplyJob = null;
+        _doOpenApplyModal(job);
+      }
+    });
+    document.getElementById('auth-gate-skip').addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') document.getElementById('auth-gate-skip').click();
+    });
+
+    // Close profile dropdown when clicking outside
+    document.addEventListener('click', e => {
+      if (!e.target.closest('#profile-wrapper')) closeProfileDropdown();
+    });
+
+    // Close auth gate on overlay click
+    document.getElementById('auth-gate-modal').addEventListener('click', e => {
+      if (e.target === e.currentTarget) closeAuthGate();
+    });
+
+    // ── Google GIS init ────────────────────────────────
+    // We poll for the GSI script to load (it's loaded async/defer).
+    // Once loaded, initGoogleAuth() initialises GIS and pre-renders
+    // the sign-in button into #gsi-button-container inside the gate modal.
+    window.addEventListener('load', () => {
+      const tryInit = () => {
+        if (typeof google !== 'undefined' && google.accounts?.id) {
+          initGoogleAuth();
+        } else {
+          setTimeout(tryInit, 150);
+        }
+      };
+      tryInit();
+    });
+  </script>
+</body>
+
+</html>

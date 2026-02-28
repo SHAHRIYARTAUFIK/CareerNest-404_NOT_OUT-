@@ -1,0 +1,2045 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23f59e0b'/%3E%3Cstop offset='100%25' stop-color='%23ea580c'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='12' fill='url(%23g)'/%3E%3Ctext x='32' y='46' font-family='Georgia,serif' font-size='30' font-weight='900' font-style='italic' text-anchor='middle' fill='%23111111'%3ECN%3C/text%3E%3C/svg%3E" />
+  <title>CareerNest Admin — Job Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,900&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600&display=swap"
+    rel="stylesheet" />
+  <!-- Config (fill from .env) -->
+  <script src="config.js"></script>
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    :root {
+      --bg: #070d1a;
+      --bg2: #0d1628;
+      --surface: #111e33;
+      --card: #142036;
+      --card-hi: #1a2844;
+      --border: rgba(255, 255, 255, .07);
+      --border-hi: rgba(245, 158, 11, .3);
+      --gold: #f59e0b;
+      --gold-lt: #fbbf24;
+      --gold-dim: rgba(245, 158, 11, .1);
+      --blue: #3b82f6;
+      --blue-dim: rgba(59, 130, 246, .12);
+      --green: #10b981;
+      --green-dim: rgba(16, 185, 129, .12);
+      --orange: #f97316;
+      --red: #ef4444;
+      --purple: #8b5cf6;
+      --text: #e8edf5;
+      --muted: #7d8fa8;
+      --subtle: #3a4a60;
+      --r-sm: 8px;
+      --r-md: 14px;
+      --r-lg: 20px;
+      --shadow: 0 4px 24px rgba(0, 0, 0, .4);
+      --shadow-lg: 0 16px 60px rgba(0, 0, 0, .6);
+      --trans: .22s cubic-bezier(.4, 0, .2, 1);
+      --grad-gold: linear-gradient(135deg, #f59e0b, #f97316);
+      --grad-aurora: linear-gradient(135deg, #f59e0b 0%, #ef4444 40%, #8b5cf6 70%, #3b82f6 100%);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    html {
+      font-size: 16px;
+      scroll-behavior: smooth
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.6
+    }
+
+    ::-webkit-scrollbar {
+      width: 5px
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg)
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, var(--gold), var(--orange));
+      border-radius: 99px
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--gold);
+      outline-offset: 3px;
+      border-radius: 4px
+    }
+
+    .hidden {
+      display: none !important
+    }
+
+    .serif {
+      font-family: 'Playfair Display', serif
+    }
+
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      background: none
+    }
+
+    input,
+    select,
+    textarea {
+      font-family: inherit
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none
+    }
+
+    img {
+      max-width: 100%;
+      display: block
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0
+      }
+
+      to {
+        opacity: 1
+      }
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .45
+      }
+    }
+
+    @keyframes shimmer {
+      0% {
+        background-position: -200% 0
+      }
+
+      100% {
+        background-position: 200% 0
+      }
+    }
+
+    /* ── AUTH GATE ────────────────────────────────────── */
+    #auth-gate {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      background:
+        radial-gradient(ellipse 60% 50% at 50% 0%, rgba(245, 158, 11, .09), transparent 70%),
+        radial-gradient(ellipse 40% 40% at 85% 80%, rgba(59, 130, 246, .06), transparent 60%);
+    }
+
+    .gate-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 3rem 2.5rem;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+      box-shadow: var(--shadow-lg);
+      animation: fadeUp .5s ease both;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .gate-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--grad-aurora);
+    }
+
+    .gate-logo {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      background: var(--grad-gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Playfair Display', serif;
+      font-weight: 900;
+      font-size: 1.5rem;
+      color: var(--bg);
+      margin: 0 auto 1.5rem;
+      box-shadow: 0 4px 20px rgba(245, 158, 11, .4);
+    }
+
+    .gate-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: .5rem
+    }
+
+    .gate-sub {
+      color: var(--muted);
+      font-size: .9rem;
+      line-height: 1.7;
+      margin-bottom: 2rem
+    }
+
+    .gate-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      background: rgba(239, 68, 68, .1);
+      border: 1px solid rgba(239, 68, 68, .25);
+      color: #ef4444;
+      border-radius: 99px;
+      padding: .28rem .8rem;
+      font-size: .74rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      letter-spacing: .03em;
+    }
+
+    .google-signin-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .7rem;
+      width: 100%;
+      background: #fff;
+      color: #3c4043;
+      border: 1px solid #dadce0;
+      border-radius: var(--r-md);
+      padding: .8rem 1.5rem;
+      font-size: .9rem;
+      font-weight: 500;
+      transition: all var(--trans);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .15);
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .google-signin-btn:hover {
+      background: #f8f9fa;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .2);
+      transform: translateY(-1px)
+    }
+
+    .google-logo {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0
+    }
+
+    .gate-note {
+      margin-top: 1rem;
+      font-size: .76rem;
+      color: var(--muted);
+      line-height: 1.55
+    }
+
+    .gate-note strong {
+      color: var(--gold)
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      margin-top: 1.5rem;
+      font-size: .82rem;
+      color: var(--muted);
+      transition: color var(--trans);
+    }
+
+    .back-link:hover {
+      color: var(--text)
+    }
+
+    .gate-error {
+      display: none;
+      background: rgba(239, 68, 68, .1);
+      border: 1px solid rgba(239, 68, 68, .25);
+      border-radius: var(--r-sm);
+      padding: .75rem 1rem;
+      font-size: .84rem;
+      color: #ef4444;
+      margin-top: 1rem;
+      line-height: 1.55;
+    }
+
+    .gate-error.visible {
+      display: block
+    }
+
+    /* ── NAV ──────────────────────────────────────────── */
+    #admin-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .8rem 2rem;
+      background: rgba(7, 13, 26, .88);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      gap: 1rem;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: .6rem
+    }
+
+    .nav-logo {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      background: var(--grad-gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Playfair Display', serif;
+      font-weight: 900;
+      font-size: 1.1rem;
+      color: var(--bg)
+    }
+
+    .nav-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      font-weight: 700
+    }
+
+    .nav-title span {
+      color: var(--gold)
+    }
+
+    .admin-badge {
+      background: rgba(239, 68, 68, .15);
+      border: 1px solid rgba(239, 68, 68, .3);
+      color: #ef4444;
+      border-radius: 99px;
+      padding: .18rem .6rem;
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: .65rem
+    }
+
+    .admin-profile {
+      display: flex;
+      align-items: center;
+      gap: .55rem;
+      padding: .3rem .75rem .3rem .35rem;
+      border-radius: 99px;
+      border: 1px solid var(--border);
+      background: var(--surface)
+    }
+
+    .admin-avatar {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--border-hi)
+    }
+
+    .admin-avatar-ph {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--grad-gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .72rem;
+      font-weight: 700;
+      color: var(--bg)
+    }
+
+    .admin-name {
+      font-size: .8rem;
+      font-weight: 500
+    }
+
+    .signout-btn {
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      padding: .38rem .8rem;
+      border-radius: 99px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: .8rem;
+      transition: all var(--trans);
+    }
+
+    .signout-btn:hover {
+      border-color: rgba(239, 68, 68, .4);
+      color: var(--red);
+      background: rgba(239, 68, 68, .08)
+    }
+
+    .back-nav-btn {
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      padding: .38rem .8rem;
+      border-radius: 99px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: .8rem;
+      transition: all var(--trans);
+    }
+
+    .back-nav-btn:hover {
+      border-color: var(--border-hi);
+      color: var(--text);
+      background: var(--gold-dim)
+    }
+
+    /* ── MAIN LAYOUT ──────────────────────────────────── */
+    #admin-main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2.5rem 2rem;
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 2.5rem;
+      align-items: start;
+    }
+
+    /* ── SECTION HEADERS ──────────────────────────────── */
+    .section-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      animation: fadeUp .4s ease both;
+    }
+
+    .section-card::before {
+      content: '';
+      display: block;
+      height: 3px;
+      background: var(--grad-aurora)
+    }
+
+    .section-header {
+      padding: 1.5rem 1.75rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: .25rem
+    }
+
+    .section-sub {
+      font-size: .82rem;
+      color: var(--muted)
+    }
+
+    .section-body {
+      padding: 1.5rem 1.75rem
+    }
+
+    /* ── FORM ─────────────────────────────────────────── */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: .35rem;
+      margin-bottom: 1rem
+    }
+
+    .form-label {
+      font-size: .73rem;
+      font-weight: 600;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      color: var(--muted)
+    }
+
+    .form-label .req {
+      color: var(--gold)
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: var(--r-sm);
+      padding: .6rem .85rem;
+      font-size: .875rem;
+      transition: border-color var(--trans), box-shadow var(--trans);
+    }
+
+    /* Force consistent height to fix the Location box */
+    .form-input,
+    .form-select {
+      height: 42px;
+    }
+
+    /* ── PROFILE DROPDOWN (Copied from index.html) ── */
+    .profile-wrapper {
+      position: relative
+    }
+
+    .profile-btn {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: .28rem .75rem .28rem .28rem;
+      cursor: pointer;
+      transition: all var(--trans);
+    }
+
+    .profile-btn:hover {
+      border-color: var(--border-hi);
+      background: var(--card)
+    }
+
+    .profile-chevron {
+      color: var(--muted);
+      transition: transform var(--trans);
+      flex-shrink: 0
+    }
+
+    .profile-btn[aria-expanded=true] .profile-chevron {
+      transform: rotate(180deg)
+    }
+
+    .profile-dropdown {
+      position: absolute;
+      top: calc(100% + .5rem);
+      right: 0;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      min-width: 210px;
+      box-shadow: var(--shadow-lg);
+      z-index: 300;
+      overflow: hidden;
+      animation: fadeUp .18s ease both;
+    }
+
+    .profile-dropdown.hidden {
+      display: none !important
+    }
+
+    .profile-dropdown-header {
+      padding: 1rem 1rem .75rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: .65rem;
+    }
+
+    .profile-dropdown-name {
+      font-size: .88rem;
+      font-weight: 600;
+      margin-bottom: .1rem
+    }
+
+    .profile-dropdown-email {
+      font-size: .73rem;
+      color: var(--muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 150px
+    }
+
+    .profile-dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      padding: .7rem 1rem;
+      font-size: .83rem;
+      color: var(--muted);
+      transition: all var(--trans);
+      cursor: pointer;
+      width: 100%;
+      text-align: left;
+    }
+
+    .profile-dropdown-item:hover {
+      background: var(--card-hi);
+      color: var(--text)
+    }
+
+    .profile-dropdown-item.danger:hover {
+      color: var(--red);
+      background: rgba(239, 68, 68, .08)
+    }
+
+    .profile-dropdown-divider {
+      height: 1px;
+      background: var(--border);
+      margin: .25rem 0
+    }
+
+    /* ── MODALS (For Create Company) ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 400;
+      background: rgba(0, 0, 0, .72);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      animation: fadeIn .2s ease;
+    }
+
+    .modal-overlay.hidden {
+      display: none !important
+    }
+
+    .modal {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      width: 100%;
+      max-width: 500px;
+      box-shadow: var(--shadow-lg);
+      position: relative;
+      animation: fadeUp .25s ease both;
+    }
+
+    .modal-header {
+      padding: 1.5rem 1.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.25rem;
+      font-weight: 700
+    }
+
+    .modal-close {
+      width: 30px;
+      height: 30px;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      transition: all var(--trans);
+      background: var(--surface);
+    }
+
+    .modal-close:hover {
+      border-color: var(--red);
+      color: var(--red);
+      background: rgba(239, 68, 68, .1)
+    }
+
+    .modal-body {
+      padding: 1.5rem 1.75rem;
+      max-height: 70vh;
+      overflow-y: auto
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      border-color: var(--border-hi);
+      outline: none;
+      box-shadow: 0 0 0 3px var(--gold-dim);
+    }
+
+    .form-input::placeholder,
+    .form-textarea::placeholder {
+      color: var(--muted)
+    }
+
+    .form-select {
+      appearance: none;
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237d8fa8' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right .75rem center;
+      padding-right: 2.2rem;
+    }
+
+    .form-select option {
+      background: var(--card)
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 80px
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem
+    }
+
+    .form-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 1.25rem 0
+    }
+
+    .form-section-label {
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: .85rem;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+
+    .form-section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border)
+    }
+
+    .field-error {
+      font-size: .75rem;
+      color: var(--red)
+    }
+
+    .form-input.error,
+    .form-textarea.error {
+      border-color: var(--red)
+    }
+
+    /* Tags input */
+    .tags-hint {
+      font-size: .73rem;
+      color: var(--muted);
+      margin-top: .3rem
+    }
+
+    /* Submit button */
+    .submit-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .55rem;
+      background: var(--grad-gold);
+      color: var(--bg);
+      padding: .8rem;
+      border-radius: var(--r-md);
+      font-weight: 700;
+      font-size: .95rem;
+      margin-top: 1.25rem;
+      transition: all var(--trans);
+      box-shadow: 0 4px 16px rgba(245, 158, 11, .25);
+    }
+
+    .submit-btn:hover {
+      background-position: 100%;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 24px rgba(245, 158, 11, .4)
+    }
+
+    .submit-btn:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+      transform: none
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(0, 0, 0, .2);
+      border-top-color: var(--bg);
+      border-radius: 50%;
+      animation: spin .7s linear infinite
+    }
+
+    /* ── JOBS LIST ────────────────────────────────────── */
+    .jobs-list-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 1.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .jobs-list-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      font-weight: 700
+    }
+
+    .jobs-count-badge {
+      background: var(--gold-dim);
+      border: 1px solid var(--border-hi);
+      color: var(--gold);
+      border-radius: 99px;
+      padding: .18rem .6rem;
+      font-size: .73rem;
+      font-weight: 600;
+    }
+
+    .refresh-btn {
+      display: flex;
+      align-items: center;
+      gap: .35rem;
+      font-size: .78rem;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: .3rem .65rem;
+      transition: all var(--trans);
+    }
+
+    .refresh-btn:hover {
+      border-color: var(--border-hi);
+      color: var(--text);
+      background: var(--gold-dim)
+    }
+
+    #admin-jobs-grid {
+      padding: 1rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: .65rem
+    }
+
+    /* Admin Job Card */
+    .admin-job-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 1rem 1.1rem;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      transition: all var(--trans);
+      animation: fadeIn .3s ease both;
+    }
+
+    .admin-job-card:hover {
+      border-color: rgba(245, 158, 11, .2);
+      background: var(--card)
+    }
+
+    .job-card-left {
+      flex: 1;
+      min-width: 0
+    }
+
+    .job-card-title {
+      font-weight: 600;
+      font-size: .95rem;
+      margin-bottom: .2rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap
+    }
+
+    .job-card-meta {
+      font-size: .78rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: .85rem;
+      flex-wrap: wrap;
+      margin-bottom: .5rem
+    }
+
+    .job-card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .3rem
+    }
+
+    .job-tag {
+      padding: .15rem .5rem;
+      border-radius: 99px;
+      font-size: .68rem;
+      font-weight: 500
+    }
+
+    .job-tag-type {
+      background: var(--gold-dim);
+      color: var(--gold);
+      border: 1px solid rgba(245, 158, 11, .2)
+    }
+
+    .job-tag-cat {
+      background: var(--surface);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, .04)
+    }
+
+    .job-card-actions {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      flex-shrink: 0
+    }
+
+    .job-toggle-btn {
+      font-size: .73rem;
+      padding: .28rem .65rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      transition: all var(--trans);
+      white-space: nowrap;
+    }
+
+    .job-toggle-btn:hover {
+      border-color: var(--border-hi);
+      color: var(--text);
+      background: var(--gold-dim)
+    }
+
+    .job-toggle-btn.active {
+      border-color: rgba(16, 185, 129, .3);
+      color: var(--green);
+      background: var(--green-dim)
+    }
+
+    .delete-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      transition: all var(--trans);
+      flex-shrink: 0;
+    }
+
+    .delete-btn:hover {
+      border-color: rgba(239, 68, 68, .4);
+      color: var(--red);
+      background: rgba(239, 68, 68, .1)
+    }
+
+    .no-jobs {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--muted);
+      font-size: .875rem
+    }
+
+    /* Skeleton */
+    .sk-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 1rem 1.1rem
+    }
+
+    .sk {
+      background: linear-gradient(90deg, var(--card) 25%, var(--card-hi) 50%, var(--card) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 4px
+    }
+
+    .sk-t {
+      height: 15px;
+      width: 60%;
+      margin-bottom: .5rem
+    }
+
+    .sk-s {
+      height: 12px;
+      width: 40%
+    }
+
+    /* ── CONFIRM DIALOG ───────────────────────────────── */
+    .confirm-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 400;
+      background: rgba(0, 0, 0, .75);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .confirm-overlay.hidden {
+      display: none !important
+    }
+
+    .confirm-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 2rem;
+      max-width: 360px;
+      width: 100%;
+      text-align: center;
+      box-shadow: var(--shadow-lg);
+      animation: fadeUp .25s ease both;
+    }
+
+    .confirm-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem
+    }
+
+    .confirm-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.25rem;
+      margin-bottom: .5rem
+    }
+
+    .confirm-sub {
+      color: var(--muted);
+      font-size: .875rem;
+      margin-bottom: 1.5rem
+    }
+
+    .confirm-actions {
+      display: flex;
+      gap: .75rem;
+      justify-content: center
+    }
+
+    .confirm-cancel {
+      padding: .6rem 1.25rem;
+      border-radius: var(--r-sm);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: .875rem;
+      transition: all var(--trans)
+    }
+
+    .confirm-cancel:hover {
+      border-color: var(--border-hi);
+      color: var(--text);
+      background: var(--gold-dim)
+    }
+
+    .confirm-delete {
+      padding: .6rem 1.4rem;
+      border-radius: var(--r-sm);
+      background: var(--red);
+      color: #fff;
+      font-weight: 600;
+      font-size: .875rem;
+      transition: all var(--trans)
+    }
+
+    .confirm-delete:hover {
+      background: #dc2626;
+      transform: translateY(-1px)
+    }
+
+    /* ── SUCCESS BANNER ───────────────────────────────── */
+    .success-banner {
+      background: var(--green-dim);
+      border: 1px solid rgba(16, 185, 129, .25);
+      border-radius: var(--r-md);
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      font-size: .875rem;
+      margin-bottom: 1rem;
+      animation: fadeUp .3s ease both;
+    }
+
+    .success-banner.hidden {
+      display: none !important
+    }
+
+    .success-banner svg {
+      flex-shrink: 0;
+      color: var(--green)
+    }
+
+    /* ── TOAST ────────────────────────────────────────── */
+    #toast-container {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+      pointer-events: none
+    }
+
+    .toast {
+      display: flex;
+      align-items: center;
+      gap: .65rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: .75rem 1.1rem;
+      box-shadow: var(--shadow);
+      font-size: .84rem;
+      font-weight: 500;
+      pointer-events: all;
+      animation: fadeUp .25s ease both;
+      max-width: 320px;
+    }
+
+    .toast.success {
+      border-color: rgba(16, 185, 129, .4);
+      background: rgba(16, 185, 129, .08)
+    }
+
+    .toast.error {
+      border-color: rgba(239, 68, 68, .4);
+      background: rgba(239, 68, 68, .08)
+    }
+
+    .toast.info {
+      border-color: var(--border-hi);
+      background: var(--gold-dim)
+    }
+
+    .toast-close {
+      margin-left: auto;
+      color: var(--muted)
+    }
+
+    /* ── NOISE ────────────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: .3;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='.03'/%3E%3C/svg%3E")
+    }
+
+    /* ── SCROLL PROGRESS ──────────────────────────────── */
+    #scroll-progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 300;
+      height: 2px;
+      width: 0%;
+      background: var(--grad-aurora);
+      transition: width .1s;
+      pointer-events: none
+    }
+
+    /* ── RESPONSIVE ───────────────────────────────────── */
+    @media(max-width:900px) {
+      #admin-main {
+        grid-template-columns: 1fr;
+        padding: 1.5rem 1rem
+      }
+    }
+
+    @media(max-width:600px) {
+      #admin-nav {
+        padding: .7rem 1rem
+      }
+
+      .nav-title {
+        display: none
+      }
+
+      .form-row {
+        grid-template-columns: 1fr
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="scroll-progress" aria-hidden="true"></div>
+
+  <!-- ══ AUTH GATE ═══════════════════════════════════════ -->
+  <div id="auth-gate" role="main" aria-label="Admin authentication">
+    <div class="gate-card">
+      <div class="gate-logo" aria-hidden="true">C</div>
+      <div class="gate-badge" role="status">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          aria-hidden="true">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        </svg>
+        Admin Access Only
+      </div>
+      <h1 class="gate-title serif">Admin Panel</h1>
+      <p class="gate-sub">
+        This area is restricted to authorized administrators.<br />
+        Sign in with your Google account to continue.
+      </p>
+      <div id="google-btn-container" style="display: flex; justify-content: center; width: 100%;"></div>
+      <div class="gate-error" id="gate-error" role="alert"></div>
+      <p class="gate-note">
+        Only <strong id="gate-admin-email-display">the configured admin</strong> may access this panel.<br />
+        All actions are logged.
+      </p>
+      <a href="index.html" class="back-link">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          aria-hidden="true">
+          <path d="M19 12H5M12 19l-7-7 7-7" />
+        </svg>
+        Back to Job Board
+      </a>
+    </div>
+  </div>
+
+  <!-- ══ ADMIN APP (hidden until auth) ══════════════════ -->
+  <div id="admin-app" class="hidden">
+
+    <!-- NAV -->
+    <nav id="admin-nav" aria-label="Admin navigation">
+      <div class="nav-brand">
+        <div class="nav-logo" aria-hidden="true">C</div>
+        <span class="nav-title serif">Career<span>Nest</span></span>
+        <span class="admin-badge">Admin</span>
+      </div>
+      <div class="nav-right">
+        <a href="index.html" class="back-nav-btn" aria-label="Back to job board">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+          Job Board
+        </a>
+        <div class="profile-wrapper" id="profile-wrapper">
+          <button class="profile-btn" id="profile-btn" aria-expanded="false" aria-haspopup="true">
+            <img class="admin-avatar" id="admin-avatar-img" src="" alt="" style="display:none" />
+            <div class="admin-avatar-ph" id="admin-avatar-ph" aria-hidden="true">?</div>
+            <span class="profile-name-text" id="admin-name-text">—</span>
+            <svg class="profile-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          </button>
+          <div class="profile-dropdown hidden" id="profile-dropdown" role="menu">
+            <div class="profile-dropdown-header">
+              <div style="display:flex; flex-direction:column;">
+                <div class="profile-dropdown-name" id="dd-admin-name">—</div>
+                <div class="profile-dropdown-email" id="dd-admin-email">—</div>
+              </div>
+            </div>
+            <div class="profile-dropdown-divider"></div>
+            <button class="profile-dropdown-item danger" id="admin-signout-btn" role="menuitem">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              Sign Out
+            </button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- MAIN -->
+    <main id="admin-main" role="main">
+
+      <!-- LEFT: Post a Job Form -->
+      <div>
+        <div class="section-card">
+          <div class="section-header">
+            <h2 class="section-title serif">Post a New Job</h2>
+            <p class="section-sub">Fill in all required fields to publish a listing.</p>
+          </div>
+          <div class="section-body">
+
+            <div class="success-banner hidden" id="post-success-banner">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                aria-hidden="true">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <span id="post-success-msg">Job posted successfully!</span>
+            </div>
+
+            <form id="post-job-form" novalidate>
+
+              <div class="form-section-label">Company</div>
+              <div class="form-group">
+                <label class="form-label" for="f-company-id">Company <span class="req">*</span></label>
+                <select class="form-select" id="f-company-id" required>
+                  <option value="">Loading companies...</option>
+                </select>
+                <div class="field-error hidden" id="err-company-id">Please select a company</div>
+                <div style="font-size:.72rem;color:var(--muted);margin-top:.3rem">
+                  Don't see your company?
+                  <button type="button" style="color:var(--gold);font-size:.72rem;text-decoration:underline"
+                    onclick="showCreateCompanyTip()">Create one first</button>
+                </div>
+              </div>
+
+              <div class="form-divider"></div>
+              <div class="form-section-label">Job Details</div>
+
+              <div class="form-group">
+                <label class="form-label" for="f-title">Job Title <span class="req">*</span></label>
+                <input class="form-input" id="f-title" type="text" placeholder="e.g. Backend Engineering Intern"
+                  required />
+                <div class="field-error hidden" id="err-title">Title is required</div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="f-category">Category <span class="req">*</span></label>
+                  <select class="form-select" id="f-category" required>
+                    <option value="">Select category</option>
+                    <option>Technology</option>
+                    <option>Finance</option>
+                    <option>Marketing</option>
+                    <option>Design</option>
+                    <option>Operations</option>
+                    <option>Human Resources</option>
+                    <option>Sales</option>
+                    <option>Engineering</option>
+                    <option>Healthcare</option>
+                    <option>Education</option>
+                    <option>Other</option>
+                  </select>
+                  <div class="field-error hidden" id="err-category">Category is required</div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="f-job-type">Job Type <span class="req">*</span></label>
+                  <select class="form-select" id="f-job-type" required>
+                    <option value="">Select type</option>
+                    <option>Full-Time</option>
+                    <option>Part-Time</option>
+                    <option>Internship</option>
+                    <option>Contract</option>
+                    <option>Remote</option>
+                    <option>Hybrid</option>
+                  </select>
+                  <div class="field-error hidden" id="err-job-type">Job type is required</div>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="f-exp-level">Experience Level <span class="req">*</span></label>
+                  <select class="form-select" id="f-exp-level" required>
+                    <option value="">Select level</option>
+                    <option>Internship / No Experience</option>
+                    <option>Entry Level</option>
+                    <option>Mid Level</option>
+                    <option>Senior Level</option>
+                  </select>
+                  <div class="field-error hidden" id="err-exp-level">Experience level is required</div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="f-location">Location <span class="req">*</span></label>
+                  <input class="form-input" id="f-location" type="text" placeholder="e.g. Bangalore, India" required />
+                  <div class="field-error hidden" id="err-location">Location is required</div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">
+                  <input type="checkbox" id="f-remote"
+                    style="accent-color:var(--gold);width:14px;height:14px;vertical-align:middle;margin-right:.4rem" />
+                  Remote Position
+                </label>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="f-desc">Description <span class="req">*</span></label>
+                <textarea class="form-textarea" id="f-desc" style="min-height:100px"
+                  placeholder="Describe the role, team, and what makes it exciting…" required></textarea>
+                <div class="field-error hidden" id="err-desc">Description is required</div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="f-responsibilities">Responsibilities</label>
+                <textarea class="form-textarea" id="f-responsibilities"
+                  placeholder="One responsibility per line…"></textarea>
+                <div class="tags-hint">Press Enter between items. Each line becomes a list item.</div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="f-requirements">Requirements</label>
+                <textarea class="form-textarea" id="f-requirements" placeholder="One requirement per line…"></textarea>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="f-nice">Nice to Have</label>
+                <textarea class="form-textarea" id="f-nice" style="min-height:60px"
+                  placeholder="One item per line…"></textarea>
+              </div>
+
+              <div class="form-divider"></div>
+              <div class="form-section-label">Compensation & Logistics</div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="f-sal-min">Min Salary (₹/mo)</label>
+                  <input class="form-input" id="f-sal-min" type="number" placeholder="15000" min="0" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="f-sal-max">Max Salary (₹/mo)</label>
+                  <input class="form-input" id="f-sal-max" type="number" placeholder="25000" min="0" />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="f-deadline">Application Deadline</label>
+                  <input class="form-input" id="f-deadline" type="date" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="f-openings">Number of Openings</label>
+                  <input class="form-input" id="f-openings" type="number" placeholder="1" min="1" />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="f-tags">Tags</label>
+                <input class="form-input" id="f-tags" type="text" placeholder="python, fastapi, backend, intern" />
+                <div class="tags-hint">Comma-separated. Used for keyword search.</div>
+              </div>
+
+              <button class="submit-btn" type="submit" id="post-submit-btn" aria-label="Post job listing">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                  aria-hidden="true">
+                  <path d="M12 5v14M5 12l7 7 7-7" />
+                </svg>
+                Publish Job Listing
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Job Listings -->
+      <div>
+        <div class="section-card" style="animation-delay:.1s">
+          <div class="jobs-list-header">
+            <div>
+              <div class="jobs-list-title serif">All Listings</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:.6rem">
+              <span class="jobs-count-badge" id="admin-jobs-count" aria-live="polite">—</span>
+              <button class="refresh-btn" id="refresh-jobs-btn" aria-label="Refresh job listings">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  aria-hidden="true">
+                  <path d="M23 4v6h-6" />
+                  <path d="M1 20v-6h6" />
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                </svg>
+                Refresh
+              </button>
+            </div>
+          </div>
+          <div id="admin-jobs-grid" role="list" aria-label="Job listings for management"></div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ── CONFIRM DIALOG ──────────────────────────────── -->
+  <div class="confirm-overlay hidden" id="confirm-overlay" role="dialog" aria-modal="true"
+    aria-labelledby="confirm-title">
+    <div class="confirm-card">
+      <div class="confirm-icon" aria-hidden="true">🗑️</div>
+      <h2 class="confirm-title serif" id="confirm-title">Delete Listing?</h2>
+      <p class="confirm-sub" id="confirm-sub">This job will be permanently removed. This action cannot be undone.</p>
+      <div class="confirm-actions">
+        <button class="confirm-cancel" id="confirm-cancel" aria-label="Cancel deletion">Keep It</button>
+        <button class="confirm-delete" id="confirm-delete" aria-label="Confirm deletion">Yes, Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay hidden" id="company-modal" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title serif">Create a Company</h2>
+        <button class="modal-close" id="company-modal-close" aria-label="Close">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="create-company-form">
+          <div class="form-group">
+            <label class="form-label" for="c-name">Company Name <span class="req">*</span></label>
+            <input class="form-input" id="c-name" type="text" placeholder="e.g. Google" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="c-industry">Industry <span class="req">*</span></label>
+            <input class="form-input" id="c-industry" type="text" placeholder="e.g. Technology" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="c-location">Location <span class="req">*</span></label>
+            <input class="form-input" id="c-location" type="text" placeholder="e.g. California, USA" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="c-website">Website</label>
+            <input class="form-input" id="c-website" type="url" placeholder="https://..." />
+          </div>
+          <button class="submit-btn" type="submit" id="company-submit-btn" style="margin-top: 1rem;">
+            Save Company & Auto-fill ID
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <!-- ── TOAST ──────────────────────────────────────── -->
+  <div id="toast-container" aria-live="assertive" aria-atomic="true"></div>
+
+  <script>
+    'use strict';
+    /* ─────────────────────────────────────────────────────
+       CONFIG
+    ───────────────────────────────────────────────────── */
+    const API = (typeof CONFIG !== 'undefined' && CONFIG.API_BASE) ? CONFIG.API_BASE : 'http://localhost:8000';
+    const ADMIN_EMAILS = (typeof CONFIG !== 'undefined' && CONFIG.ADMIN_EMAILS) ? CONFIG.ADMIN_EMAILS : ['kparitosh760@gmail.com', 'shahriyartaufik@gmail.com'];
+    const CLIENT_ID = (typeof CONFIG !== 'undefined' && CONFIG.GOOGLE_CLIENT_ID) ? CONFIG.GOOGLE_CLIENT_ID : '';
+
+    let adminUser = null;
+    let pendingDeleteId = null;
+
+    // Display configured admin email in gate
+    //document.getElementById('gate-admin-email-display').textContent = ADMIN_EMAIL;
+
+    /* ─────────────────────────────────────────────────────
+       SCROLL PROGRESS
+    ───────────────────────────────────────────────────── */
+    window.addEventListener('scroll', () => {
+      const pct = document.documentElement.scrollHeight - innerHeight;
+      document.getElementById('scroll-progress').style.width = pct > 0 ? (scrollY / pct * 100) + '%' : '0%';
+    }, { passive: true });
+
+    /* ─────────────────────────────────────────────────────
+       TOAST
+    ───────────────────────────────────────────────────── */
+    function showToast(msg, type = 'info', duration = 4000) {
+      const icons = { success: '✅', error: '❌', info: '✨' };
+      const tc = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      el.className = `toast ${type}`;
+      el.setAttribute('role', 'alert');
+      el.innerHTML = `<span>${icons[type]}</span><span>${msg}</span><button class="toast-close" aria-label="Dismiss">×</button>`;
+      el.querySelector('.toast-close').onclick = () => el.remove();
+      tc.appendChild(el);
+      setTimeout(() => el.remove(), duration);
+    }
+
+    /* ─────────────────────────────────────────────────────
+       JWT DECODE
+    ───────────────────────────────────────────────────── */
+    function parseJwt(token) {
+      try {
+        const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+        return JSON.parse(atob(b64));
+      } catch { return null; }
+    }
+
+    /* ─────────────────────────────────────────────────────
+       GOOGLE AUTH
+    ───────────────────────────────────────────────────── */
+    function initGoogleAuth() {
+      if (!CLIENT_ID || CLIENT_ID.includes('YOUR_GOOGLE_CLIENT_ID')) {
+        document.getElementById('gate-error').textContent =
+          '⚠️ Google Client ID is not configured in config.js. Please set it up first.';
+        document.getElementById('gate-error').classList.add('visible');
+        return;
+      }
+
+      google.accounts.id.initialize({
+        client_id: CLIENT_ID,
+        callback: handleAdminCredential,
+        auto_select: false,
+      });
+
+      // Render the official Google button immediately on load
+      google.accounts.id.renderButton(
+        document.getElementById('google-btn-container'),
+        { theme: 'outline', size: 'large', width: 320 }
+      );
+    }
+    function handleAdminCredential(response) {
+      const payload = parseJwt(response.credential);
+      if (!payload) { showGateError('Sign-in failed. Please try again.'); return; }
+
+      if (!ADMIN_EMAILS.includes(payload.email)) {
+        showGateError(
+          `Access denied. This panel is only accessible to ADMIN. You signed in as ${payload.email}.`
+        );
+        // Revoke immediately
+        google.accounts.id.revoke(payload.email, () => { });
+        return;
+      }
+
+      // Auth successful
+      adminUser = { name: payload.name, email: payload.email, picture: payload.picture };
+      sessionStorage.setItem('admin_user', JSON.stringify(adminUser));
+      activateAdminPanel();
+    }
+
+    function showGateError(msg) {
+      const el = document.getElementById('gate-error');
+      el.textContent = msg;
+      el.classList.add('visible');
+    }
+    // Profile Dropdown logic
+    document.getElementById('profile-btn').addEventListener('click', () => {
+      const dd = document.getElementById('profile-dropdown');
+      const btn = document.getElementById('profile-btn');
+      const isHidden = dd.classList.contains('hidden');
+
+      if (isHidden) {
+        dd.classList.remove('hidden');
+        btn.setAttribute('aria-expanded', 'true');
+      } else {
+        dd.classList.add('hidden');
+        btn.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', e => {
+      if (!e.target.closest('#profile-wrapper')) {
+        document.getElementById('profile-dropdown').classList.add('hidden');
+        document.getElementById('profile-btn').setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    function activateAdminPanel() {
+      document.getElementById('auth-gate').classList.add('hidden');
+      document.getElementById('admin-app').classList.remove('hidden');
+
+      // Render profile in nav
+      const img = document.getElementById('admin-avatar-img');
+      const ph = document.getElementById('admin-avatar-ph');
+      if (adminUser.picture) {
+        img.src = adminUser.picture; img.style.display = ''; ph.style.display = 'none';
+      } else {
+        ph.textContent = adminUser.name[0]; ph.style.display = '';
+      }
+      document.getElementById('admin-name-text').textContent = adminUser.name.split(' ')[0];
+      document.getElementById('dd-admin-name').textContent = adminUser.name;
+      document.getElementById('dd-admin-email').textContent = adminUser.email;
+
+      loadAdminCompanies();
+      loadAdminJobs();
+      showToast(`Welcome, ${adminUser.name.split(' ')[0]} 👋`, 'success');
+    }
+
+    function adminSignOut() {
+      if (CLIENT_ID && !CLIENT_ID.includes('YOUR_GOOGLE_CLIENT_ID')) {
+        google.accounts.id.revoke(adminUser?.email || '', () => { });
+      }
+      adminUser = null;
+      sessionStorage.removeItem('admin_user');
+      document.getElementById('admin-app').classList.add('hidden');
+      document.getElementById('auth-gate').classList.remove('hidden');
+      document.getElementById('gate-error').classList.remove('visible');
+      showToast('Signed out', 'info', 2000);
+    }
+
+    document.getElementById('admin-signout-btn').addEventListener('click', adminSignOut);
+
+    /* ─────────────────────────────────────────────────────
+       API HELPER
+    ───────────────────────────────────────────────────── */
+    async function apiFetch(path, opts = {}) {
+      try {
+        const res = await fetch(API + path, { headers: { 'Content-Type': 'application/json' }, ...opts });
+        if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.detail || `HTTP ${res.status}`); }
+        return res.json();
+      } catch (e) {
+        if (e.message === 'Failed to fetch') throw new Error('Cannot reach backend. Ensure FastAPI is running on port 8000.');
+        throw e;
+      }
+    }
+    /* ─────────────────────────────────────────────────────
+   LOAD COMPANIES
+───────────────────────────────────────────────────── */
+    async function loadAdminCompanies(selectedId = null) {
+      const select = document.getElementById('f-company-id');
+      try {
+        const data = await apiFetch('/companies');
+        const companies = data.companies || [];
+
+        if (companies.length === 0) {
+          select.innerHTML = '<option value="">No companies found. Create one first.</option>';
+        } else {
+          select.innerHTML = '<option value="">Select a company</option>' +
+            companies.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        }
+
+        // Auto-select if an ID was passed (useful after creating a new company)
+        if (selectedId) {
+          select.value = selectedId;
+        }
+      } catch (e) {
+        select.innerHTML = '<option value="">⚠️ Error loading companies</option>';
+        console.error(e);
+      }
+    }
+
+    /* ─────────────────────────────────────────────────────
+       LOAD & RENDER JOBS
+    ───────────────────────────────────────────────────── */
+    async function loadAdminJobs() {
+      const grid = document.getElementById('admin-jobs-grid');
+      grid.innerHTML = Array(4).fill(`
+    <div class="sk-card" aria-hidden="true">
+      <div class="sk sk-t"></div><div class="sk sk-s"></div>
+    </div>`).join('');
+
+      try {
+        const data = await apiFetch('/jobs?page_size=50&active_only=false');
+        const jobs = data.jobs || [];
+        document.getElementById('admin-jobs-count').textContent = `${jobs.length} listing${jobs.length !== 1 ? 's' : ''}`;
+
+        if (!jobs.length) {
+          grid.innerHTML = `<div class="no-jobs">No listings yet. Post your first job!</div>`;
+          return;
+        }
+        grid.innerHTML = jobs.map(job => adminJobCardHTML(job)).join('');
+        attachAdminCardEvents();
+      } catch (e) {
+        grid.innerHTML = `<div class="no-jobs" style="color:var(--red)">${e.message}</div>`;
+        showToast(e.message, 'error');
+      }
+    }
+
+    function adminJobCardHTML(job) {
+      const company = job.company || {};
+      const salary = job.salary_min ? `₹${(job.salary_min / 1000).toFixed(0)}k${job.salary_max ? `–₹${(job.salary_max / 1000).toFixed(0)}k` : ''}` : '—';
+      const isActive = job.is_active !== false;
+      return `
+  <div class="admin-job-card" role="listitem" data-job-id="${job.id}" aria-label="${job.title}">
+    <div class="job-card-left">
+      <div class="job-card-title" title="${job.title}">${job.title}</div>
+      <div class="job-card-meta">
+        <span>${company.name || '—'}</span>
+        <span>${job.location || '—'}</span>
+        <span>${salary}</span>
+        <span>${job.applications_count || 0} applied</span>
+      </div>
+      <div class="job-card-tags">
+        <span class="job-tag job-tag-type">${job.job_type || '—'}</span>
+        <span class="job-tag job-tag-cat">${job.category || '—'}</span>
+        ${!isActive ? '<span class="job-tag" style="background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2)">Inactive</span>' : ''}
+      </div>
+    </div>
+    <div class="job-card-actions">
+      <button class="job-toggle-btn${isActive ? ' active' : ''}"
+        data-job-id="${job.id}" data-active="${isActive}"
+        aria-label="${isActive ? 'Deactivate' : 'Activate'} listing"
+        aria-pressed="${isActive}">
+        ${isActive ? '● Active' : '○ Inactive'}
+      </button>
+      <button class="delete-btn" data-job-id="${job.id}" data-job-title="${job.title}" aria-label="Delete ${job.title}">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+      </button>
+    </div>
+  </div>`;
+    }
+
+    function attachAdminCardEvents() {
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', () => openConfirm(btn.dataset.jobId, btn.dataset.jobTitle));
+      });
+      document.querySelectorAll('.job-toggle-btn').forEach(btn => {
+        btn.addEventListener('click', () => toggleJobActive(btn.dataset.jobId, btn.dataset.active === 'true'));
+      });
+    }
+
+    /* ─────────────────────────────────────────────────────
+       TOGGLE JOB ACTIVE
+    ───────────────────────────────────────────────────── */
+    async function toggleJobActive(jobId, currentlyActive) {
+      try {
+        await apiFetch(`/jobs/${jobId}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ is_active: !currentlyActive })
+        });
+        showToast(`Listing ${!currentlyActive ? 'activated' : 'deactivated'} successfully`, 'success', 2500);
+        loadAdminJobs();
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
+    }
+
+    /* ─────────────────────────────────────────────────────
+       DELETE JOB
+    ───────────────────────────────────────────────────── */
+    function openConfirm(jobId, jobTitle) {
+      pendingDeleteId = jobId;
+      document.getElementById('confirm-sub').textContent = `"${jobTitle}" will be permanently removed. This cannot be undone.`;
+      document.getElementById('confirm-overlay').classList.remove('hidden');
+    }
+    function closeConfirm() {
+      pendingDeleteId = null;
+      document.getElementById('confirm-overlay').classList.add('hidden');
+    }
+    document.getElementById('confirm-cancel').addEventListener('click', closeConfirm);
+    document.getElementById('confirm-delete').addEventListener('click', async () => {
+      if (!pendingDeleteId) return;
+      const btn = document.getElementById('confirm-delete');
+      btn.disabled = true; btn.textContent = 'Deleting…';
+      try {
+        await apiFetch(`/jobs/${pendingDeleteId}`, { method: 'DELETE' });
+        closeConfirm();
+        showToast('Job listing deleted', 'success', 3000);
+        loadAdminJobs();
+      } catch (e) {
+        showToast(e.message, 'error');
+        btn.disabled = false; btn.textContent = 'Yes, Delete';
+      }
+    });
+    document.getElementById('confirm-overlay').addEventListener('click', e => {
+      if (e.target === e.currentTarget) closeConfirm();
+    });
+
+    /* ─────────────────────────────────────────────────────
+       POST JOB FORM
+    ───────────────────────────────────────────────────── */
+    document.getElementById('refresh-jobs-btn').addEventListener('click', loadAdminJobs);
+
+    function parseLines(str) {
+      return str.split('\n').map(s => s.trim()).filter(Boolean);
+    }
+
+    document.getElementById('post-job-form').addEventListener('submit', async e => {
+      e.preventDefault();
+
+      // Validate required fields
+      const required = [
+        ['f-company-id', 'err-company-id'],
+        ['f-title', 'err-title'],
+        ['f-category', 'err-category'],
+        ['f-job-type', 'err-job-type'],
+        ['f-exp-level', 'err-exp-level'],
+        ['f-location', 'err-location'],
+        ['f-desc', 'err-desc'],
+      ];
+      let valid = true;
+      required.forEach(([fId, eId]) => {
+        const f = document.getElementById(fId);
+        const e = document.getElementById(eId);
+        if (!f.value.trim()) {
+          f.classList.add('error'); e.classList.remove('hidden'); valid = false;
+        } else {
+          f.classList.remove('error'); e.classList.add('hidden');
+        }
+      });
+      if (!valid) { showToast('Please fill in all required fields', 'error', 3000); return; }
+
+      const btn = document.getElementById('post-submit-btn');
+      btn.disabled = true;
+      btn.innerHTML = `<div class="spinner" aria-label="Posting…"></div> Publishing…`;
+
+      const salMin = parseInt(document.getElementById('f-sal-min').value) || null;
+      const salMax = parseInt(document.getElementById('f-sal-max').value) || null;
+      const deadline = document.getElementById('f-deadline').value || null;
+      const openings = parseInt(document.getElementById('f-openings').value) || 1;
+      const tagsRaw = document.getElementById('f-tags').value;
+      const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [];
+
+      const payload = {
+        company_id: document.getElementById('f-company-id').value.trim(),
+        title: document.getElementById('f-title').value.trim(),
+        category: document.getElementById('f-category').value,
+        job_type: document.getElementById('f-job-type').value,
+        experience_level: document.getElementById('f-exp-level').value,
+        location: document.getElementById('f-location').value.trim(),
+        is_remote: document.getElementById('f-remote').checked,
+        description: document.getElementById('f-desc').value.trim(),
+        responsibilities: parseLines(document.getElementById('f-responsibilities').value),
+        requirements: parseLines(document.getElementById('f-requirements').value),
+        nice_to_have: parseLines(document.getElementById('f-nice').value),
+        salary_min: salMin,
+        salary_max: salMax,
+        salary_currency: 'INR',
+        application_deadline: deadline,
+        openings,
+        tags,
+      };
+
+      try {
+        const result = await apiFetch('/jobs', { method: 'POST', body: JSON.stringify(payload) });
+        btn.disabled = false;
+        btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M12 5v14M5 12l7 7 7-7"/></svg> Publish Job Listing`;
+
+        document.getElementById('post-job-form').reset();
+        const banner = document.getElementById('post-success-banner');
+        document.getElementById('post-success-msg').textContent =
+          `"${result.job?.title || payload.title}" published successfully!`;
+        banner.classList.remove('hidden');
+        setTimeout(() => banner.classList.add('hidden'), 5000);
+
+        showToast(`"${payload.title}" is now live! 🎉`, 'success', 4000);
+        loadAdminJobs();
+      } catch (err) {
+        btn.disabled = false;
+        btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M12 5v14M5 12l7 7 7-7"/></svg> Publish Job Listing`;
+        showToast(err.message, 'error', 5000);
+      }
+    });
+
+    /* ─────────────────────────────────────────────────────
+       CREATE COMPANY MODAL
+    ───────────────────────────────────────────────────── */
+    function showCreateCompanyTip() {
+      document.getElementById('company-modal').classList.remove('hidden');
+    }
+
+    function closeCompanyModal() {
+      document.getElementById('company-modal').classList.add('hidden');
+    }
+
+    document.getElementById('company-modal-close').addEventListener('click', closeCompanyModal);
+
+    document.getElementById('create-company-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const btn = document.getElementById('company-submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+
+      const payload = {
+        name: document.getElementById('c-name').value.trim(),
+        industry: document.getElementById('c-industry').value.trim(),
+        location: document.getElementById('c-location').value.trim(),
+        website: document.getElementById('c-website').value.trim() || undefined
+      };
+
+      try {
+        const res = await apiFetch('/companies', { method: 'POST', body: JSON.stringify(payload) });
+        showToast('Company created successfully!', 'success');
+
+        // Refresh the dropdown and auto-select the newly created company
+        await loadAdminCompanies(res.id);
+
+        closeCompanyModal();
+        e.target.reset(); // Clear the form for next time
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save Company & Auto-fill ID';
+      }
+    });
+
+    /* ─────────────────────────────────────────────────────
+       INIT
+    ───────────────────────────────────────────────────── */
+    // Restore session if admin signed in earlier
+    const savedAdmin = sessionStorage.getItem('admin_user');
+    if (savedAdmin) {
+      try {
+        adminUser = JSON.parse(savedAdmin);
+        // Verify it's still the right person
+        if (ADMIN_EMAILS.includes(adminUser.email)) {
+          activateAdminPanel();
+        } else {
+          sessionStorage.removeItem('admin_user');
+          adminUser = null;
+        }
+      } catch { sessionStorage.removeItem('admin_user'); }
+    }
+
+    // Init Google GIS once loaded
+    window.addEventListener('load', () => {
+      const tryInit = () => {
+        if (typeof google !== 'undefined' && google.accounts) {
+          initGoogleAuth();
+        } else {
+          setTimeout(tryInit, 200);
+        }
+      };
+      tryInit();
+    });
+  </script>
+</body>
+
+</html>
