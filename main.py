@@ -18,26 +18,31 @@ load_dotenv()
 # MongoDB Connection
 # ──────────────────────────────────────────────
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/careernest")
-_client   = MongoClient(MONGO_URI, tlsCAFile=certifi.where())
-_db       = _client["careernest"]
 
-col_companies:    Collection = _db["companies"]
-col_jobs:         Collection = _db["jobs"]
+# Added serverSelectionTimeoutMS so Vercel doesn't hang forever if the DB URI is wrong
+_client = MongoClient(MONGO_URI, tlsCAFile=certifi.where(), serverSelectionTimeoutMS=5000)
+_db = _client["careernest"]
+
+col_companies: Collection = _db["companies"]
+col_jobs: Collection = _db["jobs"]
 col_applications: Collection = _db["applications"]
-col_bookmarks:    Collection = _db["bookmarks"]
+col_bookmarks: Collection = _db["bookmarks"]
 
 # Indexes for fast querying
-col_companies.create_index("id", unique=True)
-col_jobs.create_index("id", unique=True)
-col_jobs.create_index("is_active")
-col_jobs.create_index("company_id")
-col_applications.create_index("id", unique=True)
-col_applications.create_index(
-    [("job_id", ASCENDING), ("applicant_email", ASCENDING)]
-)
-col_bookmarks.create_index(
-    [("student_email", ASCENDING), ("job_id", ASCENDING)]
-)
+try:
+    col_companies.create_index("id", unique=True)
+    col_jobs.create_index("id", unique=True)
+    col_jobs.create_index("is_active")
+    col_jobs.create_index("company_id")
+    col_applications.create_index("id", unique=True)
+    col_applications.create_index(
+        [("job_id", ASCENDING), ("applicant_email", ASCENDING)]
+    )
+    col_bookmarks.create_index(
+        [("student_email", ASCENDING), ("job_id", ASCENDING)]
+    )
+except Exception as e:
+    print(f"Warning: Could not create indexes. DB might not be connected yet. {e}")
 
 # ──────────────────────────────────────────────
 # App Setup
@@ -238,87 +243,88 @@ def _enrich_job(job: dict) -> dict:
 # Seed Data (skipped if DB already has data)
 # ──────────────────────────────────────────────
 def _seed():
-    if col_companies.count_documents({}) > 0:
-        print("MongoDB already seeded — skipping.")
-        return
+    try:
+        if col_companies.count_documents({}) > 0:
+            print("MongoDB already seeded — skipping.")
+            return
 
-    print("Seeding MongoDB with initial data...")
-    c1, c2, c3 = str(uuid.uuid4()), str(uuid.uuid4()), str(uuid.uuid4())
-    now = datetime.utcnow()
+        print("Seeding MongoDB with initial data...")
+        c1, c2, c3 = str(uuid.uuid4()), str(uuid.uuid4()), str(uuid.uuid4())
+        now = datetime.utcnow()
 
-    col_companies.insert_many([
-        {"id": c1, "name": "TechNova Solutions",  "industry": "Software Development",
-         "website": "https://technova.io",   "logo_url": "https://placehold.co/100x100?text=TN",
-         "description": "Building next-gen cloud platforms for enterprises.",
-         "location": "Bangalore, India",  "created_at": now, "total_jobs_posted": 2},
-        {"id": c2, "name": "FinEdge Capital",      "industry": "Finance & Fintech",
-         "website": "https://finedge.in",    "logo_url": "https://placehold.co/100x100?text=FE",
-         "description": "Democratizing investment for retail investors.",
-         "location": "Mumbai, India",     "created_at": now, "total_jobs_posted": 1},
-        {"id": c3, "name": "DesignPulse Agency",   "industry": "Design & Creative",
-         "website": "https://designpulse.co","logo_url": "https://placehold.co/100x100?text=DP",
-         "description": "Award-winning UI/UX agency.",
-         "location": "Hyderabad, India",  "created_at": now, "total_jobs_posted": 1},
-    ])
+        col_companies.insert_many([
+            {"id": c1, "name": "TechNova Solutions",  "industry": "Software Development",
+             "website": "https://technova.io",   "logo_url": "https://placehold.co/100x100?text=TN",
+             "description": "Building next-gen cloud platforms for enterprises.",
+             "location": "Bangalore, India",  "created_at": now, "total_jobs_posted": 2},
+            {"id": c2, "name": "FinEdge Capital",      "industry": "Finance & Fintech",
+             "website": "https://finedge.in",    "logo_url": "https://placehold.co/100x100?text=FE",
+             "description": "Democratizing investment for retail investors.",
+             "location": "Mumbai, India",     "created_at": now, "total_jobs_posted": 1},
+            {"id": c3, "name": "DesignPulse Agency",   "industry": "Design & Creative",
+             "website": "https://designpulse.co","logo_url": "https://placehold.co/100x100?text=DP",
+             "description": "Award-winning UI/UX agency.",
+             "location": "Hyderabad, India",  "created_at": now, "total_jobs_posted": 1},
+        ])
 
-    seeds = [
-        {"title": "Backend Engineering Intern", "company_id": c1,
-         "category": "Technology", "job_type": "Internship",
-         "experience_level": "Internship / No Experience",
-         "location": "Bangalore, India", "is_remote": True,
-         "description": "Join our core backend team and build production-grade REST APIs using Python and FastAPI.",
-         "responsibilities": ["Develop REST APIs using FastAPI", "Write unit tests", "Participate in standups"],
-         "requirements": ["Pursuing B.Tech/BE in CS", "Proficiency in Python", "Understands HTTP/REST"],
-         "nice_to_have": ["Docker experience", "Open-source contributions"],
-         "salary_min": 15000, "salary_max": 25000, "salary_currency": "INR",
-         "application_deadline": "2025-09-30", "openings": 3,
-         "tags": ["python", "fastapi", "backend", "intern"]},
-        {"title": "Full Stack Developer", "company_id": c1,
-         "category": "Technology", "job_type": "Full-Time",
-         "experience_level": "Mid Level",
-         "location": "Bangalore, India", "is_remote": False,
-         "description": "We're looking for a Full Stack Developer to join our product team.",
-         "responsibilities": ["Ship product features", "Collaborate with designers", "Mentor junior engineers"],
-         "requirements": ["2+ years experience", "React + Node.js or Python", "PostgreSQL experience"],
-         "nice_to_have": ["AWS/GCP experience", "TypeScript"],
-         "salary_min": 800000, "salary_max": 1400000, "salary_currency": "INR",
-         "application_deadline": "2025-10-15", "openings": 2,
-         "tags": ["react", "nodejs", "fullstack", "postgres"]},
-        {"title": "Finance & Investment Intern", "company_id": c2,
-         "category": "Finance", "job_type": "Internship",
-         "experience_level": "Internship / No Experience",
-         "location": "Mumbai, India", "is_remote": False,
-         "description": "Get real-world exposure to equity research and financial modelling.",
-         "responsibilities": ["Equity research", "Build financial models", "Prepare investment memos"],
-         "requirements": ["MBA (Finance) or B.Com final year", "Strong Excel skills"],
-         "nice_to_have": ["CFA Level 1", "Bloomberg Terminal"],
-         "salary_min": 20000, "salary_max": 30000, "salary_currency": "INR",
-         "application_deadline": "2025-09-20", "openings": 2,
-         "tags": ["finance", "equity", "excel", "intern"]},
-        {"title": "UI/UX Design Intern", "company_id": c3,
-         "category": "Design", "job_type": "Internship",
-         "experience_level": "Internship / No Experience",
-         "location": "Hyderabad, India", "is_remote": True,
-         "description": "Work alongside senior designers on real client projects.",
-         "responsibilities": ["Create wireframes and prototypes", "User research", "Dev handoff"],
-         "requirements": ["Degree in Design/HCI", "Proficient in Figma", "Portfolio required"],
-         "nice_to_have": ["Motion design", "Design systems experience"],
-         "salary_min": 12000, "salary_max": 18000, "salary_currency": "INR",
-         "application_deadline": "2025-10-01", "openings": 1,
-         "tags": ["figma", "ux", "ui", "design", "intern"]},
-    ]
+        seeds = [
+            {"title": "Backend Engineering Intern", "company_id": c1,
+             "category": "Technology", "job_type": "Internship",
+             "experience_level": "Internship / No Experience",
+             "location": "Bangalore, India", "is_remote": True,
+             "description": "Join our core backend team and build production-grade REST APIs using Python and FastAPI.",
+             "responsibilities": ["Develop REST APIs using FastAPI", "Write unit tests", "Participate in standups"],
+             "requirements": ["Pursuing B.Tech/BE in CS", "Proficiency in Python", "Understands HTTP/REST"],
+             "nice_to_have": ["Docker experience", "Open-source contributions"],
+             "salary_min": 15000, "salary_max": 25000, "salary_currency": "INR",
+             "application_deadline": "2025-09-30", "openings": 3,
+             "tags": ["python", "fastapi", "backend", "intern"]},
+            {"title": "Full Stack Developer", "company_id": c1,
+             "category": "Technology", "job_type": "Full-Time",
+             "experience_level": "Mid Level",
+             "location": "Bangalore, India", "is_remote": False,
+             "description": "We're looking for a Full Stack Developer to join our product team.",
+             "responsibilities": ["Ship product features", "Collaborate with designers", "Mentor junior engineers"],
+             "requirements": ["2+ years experience", "React + Node.js or Python", "PostgreSQL experience"],
+             "nice_to_have": ["AWS/GCP experience", "TypeScript"],
+             "salary_min": 800000, "salary_max": 1400000, "salary_currency": "INR",
+             "application_deadline": "2025-10-15", "openings": 2,
+             "tags": ["react", "nodejs", "fullstack", "postgres"]},
+            {"title": "Finance & Investment Intern", "company_id": c2,
+             "category": "Finance", "job_type": "Internship",
+             "experience_level": "Internship / No Experience",
+             "location": "Mumbai, India", "is_remote": False,
+             "description": "Get real-world exposure to equity research and financial modelling.",
+             "responsibilities": ["Equity research", "Build financial models", "Prepare investment memos"],
+             "requirements": ["MBA (Finance) or B.Com final year", "Strong Excel skills"],
+             "nice_to_have": ["CFA Level 1", "Bloomberg Terminal"],
+             "salary_min": 20000, "salary_max": 30000, "salary_currency": "INR",
+             "application_deadline": "2025-09-20", "openings": 2,
+             "tags": ["finance", "equity", "excel", "intern"]},
+            {"title": "UI/UX Design Intern", "company_id": c3,
+             "category": "Design", "job_type": "Internship",
+             "experience_level": "Internship / No Experience",
+             "location": "Hyderabad, India", "is_remote": True,
+             "description": "Work alongside senior designers on real client projects.",
+             "responsibilities": ["Create wireframes and prototypes", "User research", "Dev handoff"],
+             "requirements": ["Degree in Design/HCI", "Proficient in Figma", "Portfolio required"],
+             "nice_to_have": ["Motion design", "Design systems experience"],
+             "salary_min": 12000, "salary_max": 18000, "salary_currency": "INR",
+             "application_deadline": "2025-10-01", "openings": 1,
+             "tags": ["figma", "ux", "ui", "design", "intern"]},
+        ]
 
-    for s in seeds:
-        col_jobs.insert_one({
-            **s, "id": str(uuid.uuid4()),
-            "is_active": True, "views": 0, "applications_count": 0,
-            "created_at": now, "updated_at": now,
-        })
-    print(f"Seeded 3 companies and {len(seeds)} jobs.")
-
+        for s in seeds:
+            col_jobs.insert_one({
+                **s, "id": str(uuid.uuid4()),
+                "is_active": True, "views": 0, "applications_count": 0,
+                "created_at": now, "updated_at": now,
+            })
+        print(f"Seeded 3 companies and {len(seeds)} jobs.")
+    except Exception as e:
+        print(f"Skipping seed due to DB connection error during startup: {e}")
 
 _seed()
-
 
 # ══════════════════════════════════════════════
 # ROUTES
@@ -403,7 +409,7 @@ def list_jobs(
     if category:           q["category"]         = {"$regex": category.strip(),         "$options": "i"}
     if job_type:           q["job_type"]          = {"$regex": job_type.strip(),          "$options": "i"}
     if experience_level:   q["experience_level"]  = {"$regex": experience_level.strip(),  "$options": "i"}
-    if location:           q["location"]          = {"$regex": location.strip(),           "$options": "i"}
+    if location:           q["location"]          = {"$regex": location.strip(),          "$options": "i"}
     if is_remote is not None: q["is_remote"]      = is_remote
     if salary_min is not None: q["salary_max"]    = {"$gte": salary_min}
 
