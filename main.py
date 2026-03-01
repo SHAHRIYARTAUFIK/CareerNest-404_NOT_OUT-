@@ -13,7 +13,7 @@ from pymongo.collection import Collection
 import certifi
  
 load_dotenv()
-
+ 
 # ──────────────────────────────────────────────
 # MongoDB Connection
 # ──────────────────────────────────────────────
