@@ -5,4 +5,5 @@ certifi
 python-dotenv
 requests
 pydantic
+ 
 email-validator
