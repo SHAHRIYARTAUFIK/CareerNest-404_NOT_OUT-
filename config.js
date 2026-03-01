@@ -7,7 +7,7 @@
  * ⚠️  NEVER commit this file to a public repository if it contains real credentials.
  *     Add config.js to your .gitignore.
  */
-const CONFIG = {
+const CONFIG = { 
     /**
     
      * Your Google OAuth 2.0 Client ID.
