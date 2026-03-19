@@ -3,7 +3,7 @@
 CareerNest is a full-stack platform designed to help students discover and track job opportunities while providing administrators with a streamlined portal to manage listings.
  
 ##  Key Features
- 
+
 * **Job Discovery:** Search and filter by category, job type, location, and salary.
 * **Google Authentication:** Secure sign-in for students to track applications and for admins to manage the board.
 * **Application Tracking:** Students can view the live status of their applications (Pending, Reviewing, Shortlisted, etc.).
