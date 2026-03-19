@@ -1,7 +1,7 @@
 # CareerNest: Centralized Opportunity Management
 
 CareerNest is a full-stack platform designed to help students discover and track job opportunities while providing administrators with a streamlined portal to manage listings.
-
+ 
 ##  Key Features
 
 * **Job Discovery:** Search and filter by category, job type, location, and salary.
